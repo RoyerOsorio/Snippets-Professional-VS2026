@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Angular HTTP Service con Signals</Title>
+      <Author>VS2026 Snippets Library</Author>
+      <Description>Servicio Angular 19+ con HttpClient tipado, Signals de estado (loading/error/data), interceptores y retry.</Description>
+      <Shortcut>angular-basic-service</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>ServiceName</ID>
+          <ToolTip>Nombre del servicio (ej: ProductService)</ToolTip>
+          <Default>ProductService</Default>
+        </Literal>
+        <Literal>
+          <ID>ModelName</ID>
+          <ToolTip>Nombre del modelo (ej: Product)</ToolTip>
+          <Default>Product</Default>
+        </Literal>
+        <Literal>
+          <ID>ApiPath</ID>
+          <ToolTip>Ruta del endpoint (ej: products)</ToolTip>
+          <Default>products</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="TypeScript">
+        <![CDATA[// $ServiceName$.ts
+import {
+  Injectable,
+  signal,
+  computed,
+  inject,
+} from '@angular/core';
+import {
+  HttpClient,
+  HttpParams,
+  HttpErrorResponse,
+} from '@angular/common/http';
+import { catchError, retry, tap, throwError } from 'rxjs';
+import { environment } from '../environments/environment';
+
+// ---- Modelo ----
+export interface $ModelName$ {
+  id: number;
+  name: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type Create$ModelName$Dto = Omit<$ModelName$, 'id' | 'createdAt'>;
+export type Update$ModelName$Dto = Partial<Create$ModelName$Dto>;
+
+export interface PagedResult<T> {
+  items: T[];
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message: string;
+  success: boolean;
+}
+
+// ---- Query params ----
+export interface $ModelName$Query {
+  search?: string;
+  isActive?: boolean;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+}
+
+@Injectable({ providedIn: 'root' })
+export class $ServiceName$ {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/$ApiPath$`;
+
+  // ---- Estado reactivo con Signals ----
+  private readonly _items = signal<$ModelName$[]>([]);
+  private readonly _loading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _totalItems = signal(0);
+  private readonly _currentPage = signal(1);
+
+  // ---- Signals públicos (read-only) ----
+  readonly items = this._items.asReadonly();
+  readonly loading = this._loading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly totalItems = this._totalItems.asReadonly();
+  readonly currentPage = this._currentPage.asReadonly();
+
+  // ---- Computed signals ----
+  readonly hasItems = computed(() => this._items().length > 0);
+  readonly isEmpty = computed(() => !this._loading() && this._items().length === 0);
+
+  // ---- Cargar lista paginada ----
+  loadAll(query: $ModelName$Query = {}): void {
+    this._loading.set(true);
+    this._error.set(null);
+
+    let params = new HttpParams();
+    Object.entries(query).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) {
+        params = params.set(k, String(v));
+      }
+    });
+
+    this.http
+      .get<ApiResponse<PagedResult<$ModelName$>>>(this.apiUrl, { params })
+      .pipe(
+        retry({ count: 2, delay: 500 }),
+        tap((res) => {
+          this._items.set(res.data.items);
+          this._totalItems.set(res.data.totalItems);
+          this._currentPage.set(res.data.page);
+          this._loading.set(false);
+        }),
+        catchError((err: HttpErrorResponse) => {
+          this._error.set(this.parseError(err));
+          this._loading.set(false);
+          return throwError(() => err);
+        })
+      )
+      .subscribe();
+  }
+
+  // ---- Crear ----
+  create(dto: Create$ModelName$Dto): void {
+    this._loading.set(true);
+    this.http
+      .post<ApiResponse<$ModelName$>>(this.apiUrl, dto)
+      .pipe(
+        tap((res) => {
+          this._items.update((list) => [...list, res.data]);
+          this._loading.set(false);
+        }),
+        catchError((err: HttpErrorResponse) => {
+          this._error.set(this.parseError(err));
+          this._loading.set(false);
+          return throwError(() => err);
+        })
+      )
+      .subscribe();
+  }
+
+  // ---- Actualizar ----
+  update(id: number, dto: Update$ModelName$Dto): void {
+    this._loading.set(true);
+    this.http
+      .put<ApiResponse<$ModelName$>>(`${this.apiUrl}/${id}`, dto)
+      .pipe(
+        tap((res) => {
+          this._items.update((list) =>
+            list.map((i) => (i.id === id ? res.data : i))
+          );
+          this._loading.set(false);
+        }),
+        catchError((err: HttpErrorResponse) => {
+          this._error.set(this.parseError(err));
+          this._loading.set(false);
+          return throwError(() => err);
+        })
+      )
+      .subscribe();
+  }
+
+  // ---- Eliminar ----
+  delete(id: number): void {
+    this._loading.set(true);
+    this.http
+      .delete<void>(`${this.apiUrl}/${id}`)
+      .pipe(
+        tap(() => {
+          this._items.update((list) => list.filter((i) => i.id !== id));
+          this._loading.set(false);
+        }),
+        catchError((err: HttpErrorResponse) => {
+          this._error.set(this.parseError(err));
+          this._loading.set(false);
+          return throwError(() => err);
+        })
+      )
+      .subscribe();
+  }
+
+  clearError(): void {
+    this._error.set(null);
+  }
+
+  private parseError(err: HttpErrorResponse): string {
+    if (err.error?.message) return err.error.message as string;
+    if (err.status === 0) return 'Error de conexión. Verifica tu red.';
+    if (err.status === 401) return 'No autorizado. Inicia sesión nuevamente.';
+    if (err.status === 403) return 'Sin permisos para esta acción.';
+    if (err.status === 404) return 'Recurso no encontrado.';
+    if (err.status >= 500) return 'Error del servidor. Intenta más tarde.';
+    return `Error ${err.status}: ${err.statusText}`;
+  }
+}
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

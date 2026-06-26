@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Bootstrap 5 Intermediate Card</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Card Bootstrap 5.3.3 completa con imagen, badge, body, footer, accesibilidad ARIA y hover interactivo</Description>
+      <Shortcut>bs-intermediate-card</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>cardId</ID><ToolTip>ID único de la card</ToolTip><Default>card-001</Default>
+        </Literal>
+        <Literal>
+          <ID>imgSrc</ID><ToolTip>Ruta de la imagen</ToolTip><Default>/img/card-image.webp</Default>
+        </Literal>
+        <Literal>
+          <ID>imgAlt</ID><ToolTip>Texto alternativo de la imagen</ToolTip><Default>Imagen de la tarjeta</Default>
+        </Literal>
+        <Literal>
+          <ID>badge</ID><ToolTip>Texto del badge</ToolTip><Default>Destacado</Default>
+        </Literal>
+        <Literal>
+          <ID>title</ID><ToolTip>Título de la card</ToolTip><Default>Título de la Tarjeta</Default>
+        </Literal>
+        <Literal>
+          <ID>description</ID><ToolTip>Descripción del contenido</ToolTip><Default>Descripción concisa del contenido de esta tarjeta.</Default>
+        </Literal>
+        <Literal>
+          <ID>href</ID><ToolTip>URL del enlace principal</ToolTip><Default>/detalle</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<!-- Card Bootstrap 5.3.3 accesible -->
+<article class="card h-100 border-0 shadow-sm"
+         id="$cardId$"
+         aria-labelledby="$cardId$-title"
+         aria-describedby="$cardId$-desc">
+
+  <!-- Imagen de cabecera -->
+  <div class="card-img-wrapper position-relative overflow-hidden">
+    <img src="$imgSrc$"
+         alt="$imgAlt$"
+         class="card-img-top"
+         width="400" height="225"
+         loading="lazy"
+         style="object-fit:cover;height:225px;" />
+
+    <!-- Badge superpuesto -->
+    <span class="badge bg-primary position-absolute top-0 start-0 m-3"
+          aria-label="Categoría: $badge$">
+      $badge$
+    </span>
+  </div>
+
+  <!-- Cuerpo -->
+  <div class="card-body d-flex flex-column">
+    <h3 id="$cardId$-title" class="card-title h5 mb-2">$title$</h3>
+    <p id="$cardId$-desc" class="card-text text-muted flex-grow-1">$description$</p>
+
+    <!-- Metadatos -->
+    <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
+      <time datetime="2026-01-15" aria-label="Publicado el 15 de enero de 2026">
+        15 ene. 2026
+      </time>
+      <span aria-hidden="true">·</span>
+      <span>5 min lectura</span>
+    </div>
+
+    <!-- CTA - enlace que cubre toda la card con pseudo-elemento -->
+    <a href="$href$"
+       class="btn btn-outline-primary btn-sm mt-auto stretched-link"
+       aria-describedby="$cardId$-title">
+      Ver más
+      <span class="visually-hidden">sobre $title$</span>
+    </a>
+  </div>
+
+  <!-- Footer opcional -->
+  <div class="card-footer bg-transparent border-0 pt-0">
+    <div class="d-flex gap-2" role="list" aria-label="Etiquetas">
+      <span role="listitem" class="badge rounded-pill bg-secondary-subtle text-secondary">Etiqueta 1</span>
+      <span role="listitem" class="badge rounded-pill bg-secondary-subtle text-secondary">Etiqueta 2</span>
+    </div>
+  </div>
+</article>
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

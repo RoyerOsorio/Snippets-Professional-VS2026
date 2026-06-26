@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Bootstrap 5 Intermediate Navbar</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Navbar Bootstrap 5.3.3 completa con brand, toggler, dropdown, dark mode y accesibilidad ARIA</Description>
+      <Shortcut>bs-intermediate-navbar</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>brand</ID><ToolTip>Nombre o logo del sitio</ToolTip><Default>Mi Empresa</Default>
+        </Literal>
+        <Literal>
+          <ID>navId</ID><ToolTip>ID del menú colapsable</ToolTip><Default>mainNavbar</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<!-- Navbar Bootstrap 5.3.3 con dark mode automático -->
+<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom shadow-sm"
+     aria-label="Navegación principal">
+  <div class="container">
+
+    <!-- Brand -->
+    <a class="navbar-brand fw-bold" href="/" aria-label="$brand$ - Ir al inicio">
+      $brand$
+    </a>
+
+    <!-- Toggler móvil -->
+    <button class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#$navId$"
+            aria-controls="$navId$"
+            aria-expanded="false"
+            aria-label="Alternar navegación">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Menú colapsable -->
+    <div class="collapse navbar-collapse" id="$navId$">
+
+      <!-- Links principales -->
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" href="/" aria-current="page">Inicio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/nosotros">Nosotros</a>
+        </li>
+
+        <!-- Dropdown -->
+        <li class="nav-item dropdown">
+          <button class="nav-link dropdown-toggle btn btn-link text-decoration-none"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  aria-haspopup="true">
+            Servicios
+          </button>
+          <ul class="dropdown-menu shadow-sm" aria-label="Submenú Servicios">
+            <li>
+              <h6 class="dropdown-header">Digital</h6>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/servicios/web">Desarrollo Web</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/servicios/movil">Apps Móviles</a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item" href="/servicios">Ver todos</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="/blog">Blog</a>
+        </li>
+      </ul>
+
+      <!-- Búsqueda -->
+      <form class="d-flex me-2" role="search" action="/buscar" method="get">
+        <label for="nav-search" class="visually-hidden">Buscar</label>
+        <input id="nav-search"
+               class="form-control form-control-sm me-2"
+               type="search"
+               name="q"
+               placeholder="Buscar..."
+               aria-label="Buscar en el sitio" />
+        <button class="btn btn-outline-secondary btn-sm" type="submit" aria-label="Ejecutar búsqueda">
+          <span aria-hidden="true">🔍</span>
+        </button>
+      </form>
+
+      <!-- CTA -->
+      <a href="/contacto" class="btn btn-primary btn-sm">
+        Contáctanos
+      </a>
+    </div>
+
+  </div>
+</nav>
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

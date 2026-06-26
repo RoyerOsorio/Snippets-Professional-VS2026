@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Angular Arquitectura Escalable con Store</Title>
+      <Author>VS2026 Snippets Library</Author>
+      <Description>Arquitectura Angular 19+ avanzada: Feature Store con Signals, Facade pattern, Repository HTTP tipado, y separación en capas (domain/application/infrastructure).</Description>
+      <Shortcut>angular-advanced-store-architecture</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>FeatureName</ID>
+          <ToolTip>Nombre del feature (ej: Inventory)</ToolTip>
+          <Default>Inventory</Default>
+        </Literal>
+        <Literal>
+          <ID>EntityName</ID>
+          <ToolTip>Nombre de la entidad (ej: InventoryItem)</ToolTip>
+          <Default>InventoryItem</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="TypeScript">
+        <![CDATA[// ============================================================
+// CAPA DE DOMINIO — domain/$FeatureName$.model.ts
+// ============================================================
+
+export interface $EntityName$ {
+  id: number;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  categoryId: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type Create$EntityName$Command = Omit<$EntityName$, 'id' | 'createdAt' | 'updatedAt'>;
+export type Update$EntityName$Command = Partial<Create$EntityName$Command>;
+
+export interface $FeatureName$Filters {
+  search?: string;
+  categoryId?: number;
+  isActive?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+export interface $FeatureName$PageQuery extends $FeatureName$Filters {
+  page: number;
+  pageSize: number;
+  sortBy: keyof $EntityName$;
+  sortDir: 'asc' | 'desc';
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// ============================================================
+// CAPA DE INFRAESTRUCTURA — infrastructure/$FeatureName$.repository.ts
+// ============================================================
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
+
+export interface I$FeatureName$Repository {
+  getPage(query: $FeatureName$PageQuery): Observable<PagedResult<$EntityName$>>;
+  getById(id: number): Observable<$EntityName$>;
+  create(cmd: Create$EntityName$Command): Observable<$EntityName$>;
+  update(id: number, cmd: Update$EntityName$Command): Observable<$EntityName$>;
+  delete(id: number): Observable<void>;
+}
+
+@Injectable({ providedIn: 'root' })
+export class $FeatureName$Repository implements I$FeatureName$Repository {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiUrl}/${('$FeatureName$').toLowerCase()}`;
+
+  getPage(query: $FeatureName$PageQuery): Observable<PagedResult<$EntityName$>> {
+    let params = new HttpParams();
+    Object.entries(query).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') {
+        params = params.set(k, String(v));
+      }
+    });
+    return this.http.get<PagedResult<$EntityName$>>(this.baseUrl, { params });
+  }
+
+  getById(id: number): Observable<$EntityName$> {
+    return this.http.get<$EntityName$>(`${this.baseUrl}/${id}`);
+  }
+
+  create(cmd: Create$EntityName$Command): Observable<$EntityName$> {
+    return this.http.post<$EntityName$>(this.baseUrl, cmd);
+  }
+
+  update(id: number, cmd: Update$EntityName$Command): Observable<$EntityName$> {
+    return this.http.put<$EntityName$>(`${this.baseUrl}/${id}`, cmd);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+}
+
+// ============================================================
+// CAPA DE APLICACIÓN — application/$FeatureName$.store.ts
+// ============================================================
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { finalize, tap, catchError, throwError } from 'rxjs';
+
+export interface $FeatureName$State {
+  items: $EntityName$[];
+  selected: $EntityName$ | null;
+  totalItems: number;
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
+  loading: boolean;
+  saving: boolean;
+  deleting: boolean;
+  error: string | null;
+  filters: $FeatureName$Filters;
+  sortBy: keyof $EntityName$;
+  sortDir: 'asc' | 'desc';
+}
+
+const initialState: $FeatureName$State = {
+  items: [],
+  selected: null,
+  totalItems: 0,
+  currentPage: 1,
+  pageSize: 20,
+  totalPages: 1,
+  loading: false,
+  saving: false,
+  deleting: false,
+  error: null,
+  filters: {},
+  sortBy: 'name',
+  sortDir: 'asc',
+};
+
+@Injectable({ providedIn: 'root' })
+export class $FeatureName$Store {
+  private readonly repo = inject($FeatureName$Repository);
+
+  // ---- Estado privado ----
+  private readonly _state = signal<$FeatureName$State>(initialState);
+
+  // ---- Señales públicas ----
+  readonly state = this._state.asReadonly();
+  readonly items = computed(() => this._state().items);
+  readonly selected = computed(() => this._state().selected);
+  readonly loading = computed(() => this._state().loading);
+  readonly saving = computed(() => this._state().saving);
+  readonly deleting = computed(() => this._state().deleting);
+  readonly error = computed(() => this._state().error);
+  readonly pagination = computed(() => ({
+    currentPage: this._state().currentPage,
+    pageSize: this._state().pageSize,
+    totalItems: this._state().totalItems,
+    totalPages: this._state().totalPages,
+  }));
+  readonly isEmpty = computed(() =>
+    !this._state().loading && this._state().items.length === 0
+  );
+  readonly hasError = computed(() => this._state().error !== null);
+
+  // ---- Actualización inmutable del estado ----
+  private patch(partial: Partial<$FeatureName$State>): void {
+    this._state.update((s) => ({ ...s, ...partial }));
+  }
+
+  // ---- Acciones ----
+
+  loadPage(page?: number): void {
+    const s = this._state();
+    const query: $FeatureName$PageQuery = {
+      ...s.filters,
+      page: page ?? s.currentPage,
+      pageSize: s.pageSize,
+      sortBy: s.sortBy,
+      sortDir: s.sortDir,
+    };
+
+    this.patch({ loading: true, error: null });
+
+    this.repo.getPage(query).pipe(
+      tap((result) => {
+        this.patch({
+          items: result.items,
+          totalItems: result.totalItems,
+          currentPage: result.page,
+          totalPages: result.totalPages,
+          loading: false,
+        });
+      }),
+      catchError((err) => {
+        this.patch({ loading: false, error: this.parseError(err) });
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+  selectById(id: number): void {
+    this.patch({ loading: true, error: null });
+    this.repo.getById(id).pipe(
+      tap((item) => this.patch({ selected: item, loading: false })),
+      catchError((err) => {
+        this.patch({ loading: false, error: this.parseError(err) });
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+  create(cmd: Create$EntityName$Command): void {
+    this.patch({ saving: true, error: null });
+    this.repo.create(cmd).pipe(
+      tap((item) => {
+        this.patch({
+          items: [item, ...this._state().items],
+          totalItems: this._state().totalItems + 1,
+          saving: false,
+        });
+      }),
+      catchError((err) => {
+        this.patch({ saving: false, error: this.parseError(err) });
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+  update(id: number, cmd: Update$EntityName$Command): void {
+    this.patch({ saving: true, error: null });
+    this.repo.update(id, cmd).pipe(
+      tap((updated) => {
+        this.patch({
+          items: this._state().items.map((i) => (i.id === id ? updated : i)),
+          selected: this._state().selected?.id === id ? updated : this._state().selected,
+          saving: false,
+        });
+      }),
+      catchError((err) => {
+        this.patch({ saving: false, error: this.parseError(err) });
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+  delete(id: number): void {
+    this.patch({ deleting: true, error: null });
+    this.repo.delete(id).pipe(
+      tap(() => {
+        this.patch({
+          items: this._state().items.filter((i) => i.id !== id),
+          totalItems: this._state().totalItems - 1,
+          deleting: false,
+        });
+      }),
+      catchError((err) => {
+        this.patch({ deleting: false, error: this.parseError(err) });
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+  setFilters(filters: $FeatureName$Filters): void {
+    this.patch({ filters, currentPage: 1 });
+    this.loadPage(1);
+  }
+
+  setSort(sortBy: keyof $EntityName$, sortDir: 'asc' | 'desc'): void {
+    this.patch({ sortBy, sortDir, currentPage: 1 });
+    this.loadPage(1);
+  }
+
+  setPageSize(pageSize: number): void {
+    this.patch({ pageSize, currentPage: 1 });
+    this.loadPage(1);
+  }
+
+  clearSelected(): void {
+    this.patch({ selected: null });
+  }
+
+  clearError(): void {
+    this.patch({ error: null });
+  }
+
+  reset(): void {
+    this._state.set(initialState);
+  }
+
+  private parseError(err: { error?: { message?: string }; status?: number }): string {
+    if (err?.error?.message) return err.error.message;
+    if (err?.status === 404) return 'Recurso no encontrado.';
+    if (err?.status === 403) return 'Sin permisos para esta acción.';
+    if (err?.status && err.status >= 500) return 'Error del servidor. Intenta más tarde.';
+    return 'Ocurrió un error inesperado.';
+  }
+}
+
+// ============================================================
+// FACADE — application/$FeatureName$.facade.ts (para consumo desde componentes)
+// ============================================================
+@Injectable({ providedIn: 'root' })
+export class $FeatureName$Facade {
+  private readonly store = inject($FeatureName$Store);
+
+  // Exponer sólo señales necesarias para la vista
+  readonly items = this.store.items;
+  readonly loading = this.store.loading;
+  readonly saving = this.store.saving;
+  readonly pagination = this.store.pagination;
+  readonly error = this.store.error;
+  readonly isEmpty = this.store.isEmpty;
+
+  load(page?: number): void { this.store.loadPage(page); }
+  create(cmd: Create$EntityName$Command): void { this.store.create(cmd); }
+  update(id: number, cmd: Update$EntityName$Command): void { this.store.update(id, cmd); }
+  remove(id: number): void { this.store.delete(id); }
+  filter(filters: $FeatureName$Filters): void { this.store.setFilters(filters); }
+  sort(col: keyof $EntityName$, dir: 'asc' | 'desc'): void { this.store.setSort(col, dir); }
+  changePage(page: number): void { this.store.loadPage(page); }
+  changePageSize(size: number): void { this.store.setPageSize(size); }
+  clearError(): void { this.store.clearError(); }
+}
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Angular Auth Interceptor y AuthService</Title>
+      <Author>VS2026 Snippets Library</Author>
+      <Description>Interceptor HTTP funcional Angular 19+ con JWT, refresh token, manejo 401/403 y AuthService con Signals.</Description>
+      <Shortcut>angular-intermediate-auth</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Code Language="TypeScript">
+        <![CDATA[// ============================================================
+// auth.service.ts
+// ============================================================
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { tap, catchError, throwError } from 'rxjs';
+import { environment } from '../environments/environment';
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  roles: string[];
+}
+
+interface LoginDto {
+  email: string;
+  password: string;
+}
+
+interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+interface AuthResponse {
+  user: AuthUser;
+  tokens: AuthTokens;
+}
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
+
+  // ---- Estado reactivo ----
+  private readonly _user = signal<AuthUser | null>(null);
+  private readonly _loading = signal(false);
+  private readonly _error = signal<string | null>(null);
+
+  readonly user = this._user.asReadonly();
+  readonly loading = this._loading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly isAuthenticated = computed(() => this._user() !== null);
+  readonly userRoles = computed(() => this._user()?.roles ?? []);
+
+  constructor() {
+    this.restoreSession();
+  }
+
+  // ---- Restaurar sesión desde storage ----
+  private restoreSession(): void {
+    const stored = sessionStorage.getItem('auth_user');
+    if (stored && this.getAccessToken()) {
+      try {
+        this._user.set(JSON.parse(stored) as AuthUser);
+      } catch {
+        this.clearSession();
+      }
+    }
+  }
+
+  // ---- Login ----
+  login(dto: LoginDto) {
+    this._loading.set(true);
+    this._error.set(null);
+
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, dto).pipe(
+      tap((res) => {
+        this.saveTokens(res.tokens);
+        this._user.set(res.user);
+        sessionStorage.setItem('auth_user', JSON.stringify(res.user));
+        this._loading.set(false);
+      }),
+      catchError((err) => {
+        this._error.set(err?.error?.message ?? 'Credenciales inválidas.');
+        this._loading.set(false);
+        return throwError(() => err);
+      })
+    );
+  }
+
+  // ---- Refresh token ----
+  refreshToken() {
+    const refresh = this.getRefreshToken();
+    if (!refresh) return throwError(() => new Error('Sin refresh token'));
+
+    return this.http
+      .post<AuthTokens>(`${this.apiUrl}/refresh`, { refreshToken: refresh })
+      .pipe(
+        tap((tokens) => this.saveTokens(tokens)),
+        catchError((err) => {
+          this.logout();
+          return throwError(() => err);
+        })
+      );
+  }
+
+  // ---- Logout ----
+  logout(): void {
+    this.clearSession();
+    void this.router.navigate(['/login']);
+  }
+
+  // ---- Verificar rol ----
+  hasRole(role: string): boolean {
+    return this.userRoles().includes(role);
+  }
+
+  hasAnyRole(...roles: string[]): boolean {
+    return roles.some((r) => this.hasRole(r));
+  }
+
+  // ---- Token management ----
+  getAccessToken(): string | null {
+    return sessionStorage.getItem('access_token');
+  }
+
+  private getRefreshToken(): string | null {
+    return sessionStorage.getItem('refresh_token');
+  }
+
+  private saveTokens(tokens: AuthTokens): void {
+    sessionStorage.setItem('access_token', tokens.accessToken);
+    sessionStorage.setItem('refresh_token', tokens.refreshToken);
+  }
+
+  private clearSession(): void {
+    this._user.set(null);
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('auth_user');
+  }
+}
+
+// ============================================================
+// auth.interceptor.ts — Interceptor funcional HTTP
+// ============================================================
+import {
+  HttpInterceptorFn,
+  HttpRequest,
+  HttpHandlerFn,
+  HttpErrorResponse,
+} from '@angular/common/http';
+import { inject } from '@angular/core';
+import { catchError, switchMap, throwError } from 'rxjs';
+
+export const authInterceptor: HttpInterceptorFn = (
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn
+) => {
+  const auth = inject(AuthService);
+  const token = auth.getAccessToken();
+
+  // Adjuntar token si existe y no es una ruta pública
+  const authReq = token && !isPublicUrl(req.url)
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+
+  return next(authReq).pipe(
+    catchError((err: HttpErrorResponse) => {
+      // Renovar token automáticamente en 401
+      if (err.status === 401 && !req.url.includes('/auth/')) {
+        return auth.refreshToken().pipe(
+          switchMap((tokens) => {
+            const retried = req.clone({
+              setHeaders: { Authorization: `Bearer ${tokens.accessToken}` },
+            });
+            return next(retried);
+          }),
+          catchError((refreshErr) => {
+            auth.logout();
+            return throwError(() => refreshErr);
+          })
+        );
+      }
+      return throwError(() => err);
+    })
+  );
+};
+
+function isPublicUrl(url: string): boolean {
+  const publicPaths = ['/auth/login', '/auth/refresh', '/public/'];
+  return publicPaths.some((p) => url.includes(p));
+}
+
+// ============================================================
+// app.config.ts — Registrar interceptor en app bootstrap
+// ============================================================
+// import { provideHttpClient, withInterceptors } from '@angular/common/http';
+// import { authInterceptor } from './interceptors/auth.interceptor';
+//
+// export const appConfig: ApplicationConfig = {
+//   providers: [
+//     provideRouter(APP_ROUTES),
+//     provideHttpClient(withInterceptors([authInterceptor])),
+//   ],
+// };
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

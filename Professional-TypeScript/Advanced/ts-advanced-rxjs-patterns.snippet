@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>TS Reactive Patterns (Observable/Signal)</Title>
+      <Author>VS2026 Snippets Library</Author>
+      <Description>Patrones reactivos TypeScript: Observable liviano, EventBus tipado, Store reactivo con subscriptores, y Canal de datos asíncrono.</Description>
+      <Shortcut>ts-advanced-rxjs-patterns</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>StoreName</ID>
+          <ToolTip>Nombre del store de estado (ej: CartStore)</ToolTip>
+          <Default>CartStore</Default>
+        </Literal>
+        <Literal>
+          <ID>StateType</ID>
+          <ToolTip>Tipo del estado (ej: CartState)</ToolTip>
+          <Default>CartState</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="TypeScript">
+        <![CDATA[// ============================================================
+// Observable liviano — sin dependencias externas
+// ============================================================
+
+export type Observer<T> = {
+  next: (value: T) => void;
+  error?: (err: unknown) => void;
+  complete?: () => void;
+};
+
+export type Unsubscribe = () => void;
+
+export class Observable<T> {
+  constructor(
+    private readonly subscribe: (observer: Observer<T>) => Unsubscribe | void
+  ) {}
+
+  /** Crea un observable desde un array */
+  static from<T>(items: T[]): Observable<T> {
+    return new Observable<T>((obs) => {
+      items.forEach((item) => obs.next(item));
+      obs.complete?.();
+    });
+  }
+
+  /** Crea un observable desde una promesa */
+  static fromPromise<T>(promise: Promise<T>): Observable<T> {
+    return new Observable<T>((obs) => {
+      promise
+        .then((v) => { obs.next(v); obs.complete?.(); })
+        .catch((e) => obs.error?.(e));
+    });
+  }
+
+  /** Crea un observable de intervalo */
+  static interval(ms: number): Observable<number> {
+    return new Observable<number>((obs) => {
+      let count = 0;
+      const id = setInterval(() => obs.next(count++), ms);
+      return () => clearInterval(id);
+    });
+  }
+
+  /** Transforma los valores emitidos */
+  map<R>(fn: (value: T) => R): Observable<R> {
+    return new Observable<R>((obs) =>
+      this.subscribe({
+        next: (v) => obs.next(fn(v)),
+        error: obs.error,
+        complete: obs.complete,
+      })
+    );
+  }
+
+  /** Filtra los valores emitidos */
+  filter(predicate: (value: T) => boolean): Observable<T> {
+    return new Observable<T>((obs) =>
+      this.subscribe({
+        next: (v) => { if (predicate(v)) obs.next(v); },
+        error: obs.error,
+        complete: obs.complete,
+      })
+    );
+  }
+
+  /** Limita la frecuencia de emisiones */
+  debounceTime(ms: number): Observable<T> {
+    return new Observable<T>((obs) => {
+      let timer: ReturnType<typeof setTimeout>;
+      return this.subscribe({
+        next: (v) => { clearTimeout(timer); timer = setTimeout(() => obs.next(v), ms); },
+        error: obs.error,
+        complete: obs.complete,
+      });
+    });
+  }
+
+  /** Suscripción simplificada */
+  pipe(observer: Partial<Observer<T>>): Unsubscribe {
+    return (
+      this.subscribe({
+        next: observer.next ?? (() => {}),
+        error: observer.error,
+        complete: observer.complete,
+      }) ?? (() => {})
+    );
+  }
+}
+
+// ============================================================
+// EventBus tipado — comunicación desacoplada entre módulos
+// ============================================================
+
+type EventMap = Record<string, unknown>;
+
+export class EventBus<TEvents extends EventMap> {
+  private readonly handlers = new Map<keyof TEvents, Set<(payload: unknown) => void>>();
+
+  on<K extends keyof TEvents>(
+    event: K,
+    handler: (payload: TEvents[K]) => void
+  ): Unsubscribe {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, new Set());
+    }
+    const h = handler as (p: unknown) => void;
+    this.handlers.get(event)!.add(h);
+    return () => this.handlers.get(event)?.delete(h);
+  }
+
+  emit<K extends keyof TEvents>(event: K, payload: TEvents[K]): void {
+    this.handlers.get(event)?.forEach((h) => h(payload));
+  }
+
+  once<K extends keyof TEvents>(
+    event: K,
+    handler: (payload: TEvents[K]) => void
+  ): void {
+    const unsub = this.on(event, (payload) => {
+      handler(payload);
+      unsub();
+    });
+  }
+
+  clear(event?: keyof TEvents): void {
+    if (event) this.handlers.delete(event);
+    else this.handlers.clear();
+  }
+}
+
+// ============================================================
+// Store reactivo con estado inmutable
+// ============================================================
+
+export interface $StateType$ {
+  items: { id: number; name: string; qty: number }[];
+  loading: boolean;
+  error: string | null;
+}
+
+export class $StoreName$ {
+  private state: $StateType$ = {
+    items: [],
+    loading: false,
+    error: null,
+  };
+
+  private readonly subscribers = new Set<(state: $StateType$) => void>();
+
+  getState(): Readonly<$StateType$> {
+    return Object.freeze({ ...this.state });
+  }
+
+  select<K extends keyof $StateType$>(key: K): $StateType$[K] {
+    return this.state[key];
+  }
+
+  subscribe(fn: (state: $StateType$) => void): Unsubscribe {
+    this.subscribers.add(fn);
+    fn(this.getState()); // emitir estado actual inmediatamente
+    return () => this.subscribers.delete(fn);
+  }
+
+  private setState(partial: Partial<$StateType$>): void {
+    this.state = { ...this.state, ...partial };
+    this.notify();
+  }
+
+  private notify(): void {
+    const frozen = this.getState();
+    this.subscribers.forEach((fn) => fn(frozen));
+  }
+
+  // --- Acciones ---
+
+  setLoading(loading: boolean): void {
+    this.setState({ loading });
+  }
+
+  setError(error: string | null): void {
+    this.setState({ error, loading: false });
+  }
+
+  setItems(items: $StateType$['items']): void {
+    this.setState({ items, loading: false, error: null });
+  }
+
+  addItem(item: $StateType$['items'][number]): void {
+    const exists = this.state.items.find((i) => i.id === item.id);
+    const items = exists
+      ? this.state.items.map((i) => i.id === item.id ? { ...i, qty: i.qty + item.qty } : i)
+      : [...this.state.items, item];
+    this.setState({ items });
+  }
+
+  removeItem(id: number): void {
+    this.setState({ items: this.state.items.filter((i) => i.id !== id) });
+  }
+
+  reset(): void {
+    this.setState({ items: [], loading: false, error: null });
+  }
+}
+
+// ============================================================
+// Canal asíncrono (AsyncQueue) para procesamiento en serie
+// ============================================================
+
+export class AsyncQueue<T> {
+  private readonly queue: T[] = [];
+  private readonly waiters: Array<(value: T) => void> = [];
+
+  enqueue(item: T): void {
+    const waiter = this.waiters.shift();
+    if (waiter) { waiter(item); return; }
+    this.queue.push(item);
+  }
+
+  dequeue(): Promise<T> {
+    const item = this.queue.shift();
+    if (item !== undefined) return Promise.resolve(item);
+    return new Promise((resolve) => this.waiters.push(resolve));
+  }
+
+  get size(): number { return this.queue.length; }
+}
+
+// ============================================================
+// Uso
+// ============================================================
+
+// EventBus
+// type AppEvents = { 'user:login': { userId: number }; 'cart:updated': $StateType$ };
+// const bus = new EventBus<AppEvents>();
+// const unsub = bus.on('user:login', ({ userId }) => console.log(userId));
+// bus.emit('user:login', { userId: 42 });
+// unsub();
+
+// Store
+// const store = new $StoreName$();
+// const unsub = store.subscribe((s) => console.log(s.items));
+// store.addItem({ id: 1, name: 'Widget', qty: 2 });
+// unsub();
+
+// Observable
+// const obs = Observable.fromPromise(fetch('/api/data').then(r => r.json()))
+//   .map((d: unknown) => d)
+//   .filter(Boolean);
+// obs.pipe({ next: console.log, error: console.error });
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

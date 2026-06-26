@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>MVC Intermediate API Controller</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>ApiController ASP.NET Core 10 con CRUD completo, Problem Details, FluentValidation y respuestas tipadas</Description>
+      <Shortcut>mvc-intermediate-apicontroller</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>ResourceName</ID><ToolTip>Nombre del recurso (plural)</ToolTip><Default>productos</Default>
+        </Literal>
+        <Literal>
+          <ID>ControllerName</ID><ToolTip>Nombre del controlador</ToolTip><Default>Productos</Default>
+        </Literal>
+        <Literal>
+          <ID>ServiceInterface</ID><ToolTip>Interfaz del servicio</ToolTip><Default>IProductoService</Default>
+        </Literal>
+        <Literal>
+          <ID>ViewModel</ID><ToolTip>ViewModel/DTO de respuesta</ToolTip><Default>ProductoDto</Default>
+        </Literal>
+        <Literal>
+          <ID>CreateRequest</ID><ToolTip>DTO de creación</ToolTip><Default>CreateProductoRequest</Default>
+        </Literal>
+        <Literal>
+          <ID>namespace</ID><ToolTip>Namespace del controlador</ToolTip><Default>MyApp.Api.Controllers</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="CSharp"><![CDATA[using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace $namespace$;
+
+/// <summary>
+/// API RESTful para la gestión de $ControllerName$.
+/// </summary>
+[ApiController]
+[Route("api/v1/[$ResourceName$]")]
+[Produces("application/json")]
+[Authorize]
+public class $ControllerName$Controller : ControllerBase
+{
+    private readonly $ServiceInterface$ _service;
+    private readonly ILogger<$ControllerName$Controller> _logger;
+
+    public $ControllerName$Controller($ServiceInterface$ service, ILogger<$ControllerName$Controller> logger)
+    {
+        _service = service;
+        _logger  = logger;
+    }
+
+    /// <summary>Obtiene lista paginada de $ControllerName$.</summary>
+    /// <response code="200">Lista obtenida correctamente.</response>
+    [HttpGet]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PagedResult<$ViewModel$>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<$ViewModel$>>> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var result = await _service.GetPagedAsync(search, page, pageSize, ct);
+        return Ok(result);
+    }
+
+    /// <summary>Obtiene un elemento por ID.</summary>
+    /// <response code="200">Elemento encontrado.</response>
+    /// <response code="404">Elemento no encontrado.</response>
+    [HttpGet("{id:int}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof($ViewModel$), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<$ViewModel$>> GetById(int id, CancellationToken ct)
+    {
+        var item = await _service.GetByIdAsync(id, ct);
+        return item is not null ? Ok(item) : NotFound(new ProblemDetails
+        {
+            Title  = "Recurso no encontrado",
+            Detail = $"No existe un elemento con Id {id}.",
+            Status = StatusCodes.Status404NotFound
+        });
+    }
+
+    /// <summary>Crea un nuevo elemento.</summary>
+    /// <response code="201">Elemento creado.</response>
+    /// <response code="400">Datos inválidos.</response>
+    [HttpPost]
+    [ProducesResponseType(typeof($ViewModel$), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<$ViewModel$>> Create(
+        [$FromBody$] $CreateRequest$ request,
+        CancellationToken ct)
+    {
+        if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+        try
+        {
+            var created = await _service.CreateAsync(request, ct);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear $ControllerName$.");
+            return Problem("Error interno al crear el recurso.", statusCode: 500);
+        }
+    }
+
+    /// <summary>Actualiza un elemento existente.</summary>
+    /// <response code="200">Elemento actualizado.</response>
+    /// <response code="404">Elemento no encontrado.</response>
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(typeof($ViewModel$), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<$ViewModel$>> Update(
+        int id,
+        [$FromBody$] $CreateRequest$ request,
+        CancellationToken ct)
+    {
+        if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+        var updated = await _service.UpdateAsync(id, request, ct);
+        if (updated is null) return NotFound();
+        return Ok(updated);
+    }
+
+    /// <summary>Elimina un elemento.</summary>
+    /// <response code="204">Elemento eliminado.</response>
+    /// <response code="404">Elemento no encontrado.</response>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    {
+        var deleted = await _service.DeleteAsync(id, ct);
+        return deleted ? NoContent() : NotFound();
+    }
+    $end$
+}]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

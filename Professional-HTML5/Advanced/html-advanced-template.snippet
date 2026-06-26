@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>HTML5 Advanced Template Element</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Uso avanzado del elemento template HTML5 con clonación, slots y renderizado dinámico sin frameworks</Description>
+      <Shortcut>html-advanced-template</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>templateId</ID>
+          <ToolTip>ID único del template</ToolTip>
+          <Default>card-template</Default>
+        </Literal>
+        <Literal>
+          <ID>containerId</ID>
+          <ToolTip>ID del contenedor donde se inyectarán los elementos</ToolTip>
+          <Default>cards-container</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<!-- Template HTML5 reutilizable - no se renderiza hasta ser clonado -->
+<template id="$templateId$">
+  <article class="card" aria-labelledby="card-title-{{id}}">
+    <figure class="card-media">
+      <img src="" alt="" width="400" height="225" loading="lazy" class="card-img" />
+    </figure>
+    <div class="card-body">
+      <h3 id="card-title-{{id}}" class="card-title"></h3>
+      <p class="card-description"></p>
+      <footer class="card-footer">
+        <a href="" class="card-link" aria-describedby="card-title-{{id}}">Ver más</a>
+        <time class="card-date" datetime=""></time>
+      </footer>
+    </div>
+  </article>
+</template>
+
+<!-- Contenedor receptor -->
+<section aria-labelledby="cards-heading" aria-live="polite" aria-busy="true">
+  <h2 id="cards-heading">Tarjetas</h2>
+  <div id="$containerId$"
+       class="cards-grid"
+       role="list"
+       aria-label="Listado de tarjetas">
+  </div>
+  <p class="cards-empty" hidden>No hay elementos disponibles.</p>
+</section>
+
+<script>
+  // Datos de ejemplo (sustituir por fetch a API)
+  const items = [
+    {
+      id: 1,
+      title: 'Título del Elemento 1',
+      description: 'Descripción breve del elemento número uno.',
+      href: '/elemento-1',
+      image: '/img/item-1.webp',
+      imageAlt: 'Imagen representativa del elemento 1',
+      date: '2026-01-15',
+      dateLabel: '15 ene. 2026'
+    },
+    $end$
+  ];
+
+  function renderCards(data) {
+    const template = document.getElementById('$templateId$');
+    const container = document.getElementById('$containerId$');
+    const emptyMsg = document.querySelector('.cards-empty');
+
+    if (!template || !container) return;
+
+    // Indicar carga completada
+    container.closest('[aria-busy]')?.setAttribute('aria-busy', 'false');
+
+    if (!data.length) {
+      emptyMsg?.removeAttribute('hidden');
+      return;
+    }
+
+    // Crear fragmento para rendimiento
+    const fragment = document.createDocumentFragment();
+
+    data.forEach(item => {
+      // Clonar template
+      const clone = template.content.cloneNode(true);
+
+      // Rellenar datos
+      const article = clone.querySelector('article');
+      const img     = clone.querySelector('img');
+      const title   = clone.querySelector('.card-title');
+      const desc    = clone.querySelector('.card-description');
+      const link    = clone.querySelector('.card-link');
+      const time    = clone.querySelector('time');
+
+      article?.setAttribute('id', `card-${item.id}`);
+      article?.querySelector('[id*="card-title"]')?.setAttribute('id', `card-title-${item.id}`);
+      link?.setAttribute('aria-describedby', `card-title-${item.id}`);
+
+      if (img) { img.src = item.image; img.alt = item.imageAlt; }
+      if (title)  title.textContent  = item.title;
+      if (desc)   desc.textContent   = item.description;
+      if (link)   link.href          = item.href;
+      if (time)  { time.dateTime = item.date; time.textContent = item.dateLabel; }
+
+      fragment.appendChild(clone);
+    });
+
+    container.appendChild(fragment);
+  }
+
+  // Ejecutar al cargar
+  renderCards(items);
+</script>]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

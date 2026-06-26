@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Razor Basic Partial View</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Partial view Razor con modelo fuertemente tipado, null checks y uso desde vista padre</Description>
+      <Shortcut>razor-basic-partial</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>ModelType</ID><ToolTip>Tipo de modelo del partial</ToolTip><Default>ProductoViewModel</Default>
+        </Literal>
+        <Literal>
+          <ID>partialName</ID><ToolTip>Nombre del partial (sin _)</ToolTip><Default>ProductoCard</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[@* Partial View: _$partialName$.cshtml *@
+@model $ModelType$
+
+@if (Model is null)
+{
+    <div class="alert alert-warning" role="alert">No se encontró información disponible.</div>
+    return;
+}
+
+<article class="card h-100 border-0 shadow-sm" aria-label="@Model.Nombre">
+    <div class="card-body">
+        <h3 class="card-title h5">@Model.Nombre</h3>
+        <p class="card-text text-muted">@Model.Descripcion</p>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <span class="fw-bold text-primary" aria-label="Precio: @Model.Precio pesos">
+                @Model.Precio.ToString("C")
+            </span>
+            <a asp-controller="Productos"
+               asp-action="Details"
+               asp-route-id="@Model.Id"
+               class="btn btn-sm btn-outline-primary"
+               aria-label="Ver detalles de @Model.Nombre">
+                Ver más
+            </a>
+        </div>
+    </div>
+</article>
+
+@*
+Uso desde la vista padre:
+  <!-- Síncrono -->
+  <partial name="_$partialName$" model="producto" />
+
+  <!-- Asíncrono (recomendado) -->
+  @await Html.PartialAsync("_$partialName$", producto)
+
+  <!-- En bucle -->
+  @foreach (var item in Model.Productos)
+  {
+      <partial name="_$partialName$" model="item" />
+  }
+*@
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

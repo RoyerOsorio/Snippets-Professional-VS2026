@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>HTML5 Advanced CSS Grid Layout</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Layout avanzado con CSS Grid, áreas nombradas, Holy Grail layout, dark mode y responsive completo</Description>
+      <Shortcut>html-advanced-layout</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>siteName</ID>
+          <ToolTip>Nombre del sitio</ToolTip>
+          <Default>Mi Sitio</Default>
+        </Literal>
+        <Literal>
+          <ID>pageTitle</ID>
+          <ToolTip>Título de la página</ToolTip>
+          <Default>Página Principal</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<!DOCTYPE html>
+<html lang="es" dir="ltr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>$pageTitle$ | $siteName$</title>
+  <style>
+    /* Custom Properties - Sistema de diseño */
+    :root {
+      --color-primary: #0d6efd;
+      --color-bg: #ffffff;
+      --color-surface: #f8f9fa;
+      --color-text: #212529;
+      --color-text-muted: #6c757d;
+      --color-border: #dee2e6;
+      --spacing-unit: 1rem;
+      --nav-height: 4rem;
+      --sidebar-width: 16rem;
+      --transition: 200ms ease-in-out;
+      --radius: 0.5rem;
+      --shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    /* Dark mode automático */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --color-bg: #121212;
+        --color-surface: #1e1e1e;
+        --color-text: #e9ecef;
+        --color-text-muted: #adb5bd;
+        --color-border: #373b3e;
+        --shadow: 0 2px 8px rgba(0,0,0,.4);
+      }
+    }
+
+    /* Reset y base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 100%; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+    }
+
+    /* === GRID LAYOUT PRINCIPAL === */
+    .app-layout {
+      display: grid;
+      min-height: 100dvh;
+      grid-template-areas:
+        "header header"
+        "sidebar main"
+        "footer footer";
+      grid-template-columns: var(--sidebar-width) 1fr;
+      grid-template-rows: var(--nav-height) 1fr auto;
+    }
+
+    /* Responsive: colapsar sidebar en móvil */
+    @media (max-width: 768px) {
+      .app-layout {
+        grid-template-areas:
+          "header"
+          "main"
+          "footer";
+        grid-template-columns: 1fr;
+        grid-template-rows: var(--nav-height) 1fr auto;
+      }
+      .app-sidebar { display: none; }
+      .app-sidebar.is-open { display: block; position: fixed; inset: 0; z-index: 100; }
+    }
+
+    /* Zonas del layout */
+    .app-header  { grid-area: header; }
+    .app-sidebar { grid-area: sidebar; }
+    .app-main    { grid-area: main; }
+    .app-footer  { grid-area: footer; }
+
+    /* Header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      padding-inline: var(--spacing-unit);
+      gap: var(--spacing-unit);
+    }
+
+    /* Sidebar */
+    .app-sidebar {
+      background: var(--color-surface);
+      border-right: 1px solid var(--color-border);
+      overflow-y: auto;
+      padding: var(--spacing-unit);
+    }
+
+    /* Main content */
+    .app-main {
+      overflow-y: auto;
+      padding: calc(var(--spacing-unit) * 1.5);
+    }
+
+    /* Footer */
+    .app-footer {
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border);
+      padding: var(--spacing-unit);
+      text-align: center;
+      color: var(--color-text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Utilidades */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 1rem;
+      z-index: 999;
+      padding: .5rem 1rem;
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: var(--radius);
+    }
+    .skip-link:focus { top: 1rem; }
+  </style>
+</head>
+<body>
+  <!-- Accesibilidad: saltar navegación -->
+  <a href="#main-content" class="skip-link">Saltar al contenido</a>
+
+  <div class="app-layout">
+
+    <!-- Encabezado global -->
+    <header class="app-header" role="banner">
+      <button type="button" id="sidebar-toggle"
+              aria-controls="app-sidebar"
+              aria-expanded="true"
+              aria-label="Alternar menú lateral"
+              class="sidebar-toggle">
+        ☰
+      </button>
+      <a href="/" aria-label="$siteName$ - Inicio">
+        <strong>$siteName$</strong>
+      </a>
+      <nav aria-label="Acciones globales" style="margin-left:auto;">
+        <!-- Acciones del header -->
+      </nav>
+    </header>
+
+    <!-- Navegación lateral -->
+    <aside id="app-sidebar" class="app-sidebar" aria-label="Navegación lateral">
+      <nav aria-label="Menú principal">
+        <ul role="list">
+          <li><a href="/" aria-current="page">Inicio</a></li>
+          <li><a href="/seccion-1">Sección 1</a></li>
+          <li><a href="/seccion-2">Sección 2</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main id="main-content" class="app-main" role="main" tabindex="-1">
+      <h1>$pageTitle$</h1>
+      $end$
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="app-footer" role="contentinfo">
+      <p>&copy; <time datetime="2026">2026</time> $siteName$. Todos los derechos reservados.</p>
+    </footer>
+
+  </div>
+
+  <script>
+    // Toggle sidebar en móvil
+    document.getElementById('sidebar-toggle')?.addEventListener('click', () => {
+      const sidebar = document.getElementById('app-sidebar');
+      const btn = document.getElementById('sidebar-toggle');
+      const isOpen = sidebar?.classList.toggle('is-open');
+      btn?.setAttribute('aria-expanded', String(isOpen));
+    });
+  </script>
+</body>
+</html>]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

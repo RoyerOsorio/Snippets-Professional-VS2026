@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>HTML5 Basic Head</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Bloque &lt;head&gt; completo con SEO, Open Graph, meta tags y preconnect para rendimiento</Description>
+      <Shortcut>html-basic-head</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>title</ID>
+          <ToolTip>Título SEO de la página</ToolTip>
+          <Default>Título de la Página</Default>
+        </Literal>
+        <Literal>
+          <ID>description</ID>
+          <ToolTip>Meta descripción SEO</ToolTip>
+          <Default>Descripción de la página para motores de búsqueda.</Default>
+        </Literal>
+        <Literal>
+          <ID>canonical</ID>
+          <ToolTip>URL canónica de la página</ToolTip>
+          <Default>https://www.miempresa.com/</Default>
+        </Literal>
+        <Literal>
+          <ID>cssFile</ID>
+          <ToolTip>Ruta del archivo CSS principal</ToolTip>
+          <Default>/css/main.css</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<head>
+  <!-- Codificación y compatibilidad -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- SEO -->
+  <title>$title$</title>
+  <meta name="description" content="$description$" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="$canonical$" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="$title$" />
+  <meta property="og:description" content="$description$" />
+  <meta property="og:url" content="$canonical$" />
+  <meta property="og:image" content="https://www.miempresa.com/img/og-image.jpg" />
+  <meta property="og:site_name" content="Mi Empresa" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="$title$" />
+  <meta name="twitter:description" content="$description$" />
+
+  <!-- Rendimiento: preconnect a orígenes críticos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Iconos -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#0d6efd" />
+
+  <!-- Estilos críticos -->
+  <link rel="stylesheet" href="$cssFile$" />
+  $end$
+</head>]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

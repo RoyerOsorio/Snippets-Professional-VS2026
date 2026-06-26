@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Bootstrap 5 Intermediate Form</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Formulario Bootstrap 5.3.3 con validación, floating labels, feedback visual y accesibilidad WCAG</Description>
+      <Shortcut>bs-intermediate-form</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>formId</ID><ToolTip>ID único del formulario</ToolTip><Default>registroForm</Default>
+        </Literal>
+        <Literal>
+          <ID>formTitle</ID><ToolTip>Título del formulario</ToolTip><Default>Formulario de Registro</Default>
+        </Literal>
+        <Literal>
+          <ID>action</ID><ToolTip>URL de envío</ToolTip><Default>/registro</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<!-- Formulario Bootstrap 5.3.3 con validación y accesibilidad -->
+<div class="card shadow-sm border-0">
+  <div class="card-body p-4">
+    <h2 class="card-title h4 mb-4">$formTitle$</h2>
+
+    <form id="$formId$"
+          action="$action$"
+          method="post"
+          novalidate
+          class="needs-validation"
+          aria-label="$formTitle$">
+
+      <!-- Nombre y Apellido (grid responsivo) -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <!-- Floating label -->
+          <div class="form-floating">
+            <input type="text"
+                   class="form-control"
+                   id="firstName"
+                   name="firstName"
+                   placeholder="Nombre"
+                   autocomplete="given-name"
+                   required
+                   aria-required="true"
+                   minlength="2"
+                   maxlength="50" />
+            <label for="firstName">
+              Nombre <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <div class="invalid-feedback" role="alert">
+              El nombre es obligatorio (mínimo 2 caracteres).
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating">
+            <input type="text"
+                   class="form-control"
+                   id="lastName"
+                   name="lastName"
+                   placeholder="Apellido"
+                   autocomplete="family-name"
+                   required
+                   aria-required="true" />
+            <label for="lastName">
+              Apellido <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <div class="invalid-feedback" role="alert">
+              El apellido es obligatorio.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="mb-3">
+        <div class="form-floating">
+          <input type="email"
+                 class="form-control"
+                 id="email"
+                 name="email"
+                 placeholder="correo@dominio.com"
+                 autocomplete="email"
+                 required
+                 aria-required="true"
+                 aria-describedby="email-hint" />
+          <label for="email">
+            Correo electrónico <span class="text-danger" aria-hidden="true">*</span>
+          </label>
+        </div>
+        <div id="email-hint" class="form-text">Nunca compartiremos tu correo.</div>
+        <div class="invalid-feedback" role="alert">
+          Ingresa un correo electrónico válido.
+        </div>
+      </div>
+
+      <!-- Contraseña -->
+      <div class="mb-3">
+        <div class="form-floating">
+          <input type="password"
+                 class="form-control"
+                 id="password"
+                 name="password"
+                 placeholder="Contraseña"
+                 autocomplete="new-password"
+                 required
+                 aria-required="true"
+                 aria-describedby="password-hint"
+                 pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" />
+          <label for="password">
+            Contraseña <span class="text-danger" aria-hidden="true">*</span>
+          </label>
+        </div>
+        <div id="password-hint" class="form-text">
+          Mínimo 8 caracteres con mayúsculas, minúsculas y número.
+        </div>
+        <div class="invalid-feedback" role="alert">
+          La contraseña no cumple los requisitos de seguridad.
+        </div>
+      </div>
+
+      <!-- Select de rol -->
+      <div class="mb-3">
+        <div class="form-floating">
+          <select class="form-select"
+                  id="role"
+                  name="role"
+                  required
+                  aria-required="true">
+            <option value="" disabled selected>Selecciona un rol</option>
+            <option value="admin">Administrador</option>
+            <option value="editor">Editor</option>
+            <option value="viewer">Visor</option>
+          </select>
+          <label for="role">
+            Rol <span class="text-danger" aria-hidden="true">*</span>
+          </label>
+          <div class="invalid-feedback" role="alert">Selecciona un rol válido.</div>
+        </div>
+      </div>
+
+      <!-- Checkbox de términos -->
+      <div class="mb-4">
+        <div class="form-check">
+          <input class="form-check-input"
+                 type="checkbox"
+                 id="terms"
+                 name="terms"
+                 required
+                 aria-required="true"
+                 aria-describedby="terms-error" />
+          <label class="form-check-label" for="terms">
+            Acepto los <a href="/terminos" target="_blank" rel="noopener">Términos y Condiciones</a>
+            y la <a href="/privacidad" target="_blank" rel="noopener">Política de Privacidad</a>
+            <span class="text-danger" aria-hidden="true">*</span>
+          </label>
+          <div id="terms-error" class="invalid-feedback" role="alert">
+            Debes aceptar los términos para continuar.
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <button type="reset"
+                class="btn btn-outline-secondary me-md-2">
+          Limpiar
+        </button>
+        <button type="submit"
+                class="btn btn-primary"
+                id="$formId$-submit">
+          Registrarse
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  // Validación Bootstrap 5 con feedback visual
+  (() => {
+    const form = document.getElementById('$formId$');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        // Foco al primer campo inválido (accesibilidad)
+        form.querySelector(':invalid')?.focus();
+        return;
+      }
+      form.classList.add('was-validated');
+      const submitBtn = document.getElementById('$formId$-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+      // TODO: enviar datos con fetch
+      $end$
+    });
+  })();
+</script>]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

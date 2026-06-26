@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>TypeScript Basic Enum and Const</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Enum TypeScript con const object (recomendado), string enum, numeric enum y type guards</Description>
+      <Shortcut>ts-basic-enum</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>EnumName</ID><ToolTip>Nombre del enum (PascalCase)</ToolTip><Default>EstadoPedido</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="TypeScript"><![CDATA[// ============================================================
+// Patrón recomendado: const object (tree-shakeable, type-safe)
+// ============================================================
+export const $EnumName$ = {
+  Pendiente:  'pendiente',
+  Procesando: 'procesando',
+  Enviado:    'enviado',
+  Entregado:  'entregado',
+  Cancelado:  'cancelado',
+} as const;
+
+// Tipo derivado del objeto (union type automático)
+export type $EnumName$ = typeof $EnumName$[keyof typeof $EnumName$];
+// Resultado: 'pendiente' | 'procesando' | 'enviado' | 'entregado' | 'cancelado'
+
+// Array de valores para iteración y validación
+export const $EnumName$Values = Object.values($EnumName$) as $EnumName$[];
+
+// Type guard para validar en runtime
+export function is$EnumName$(value: unknown): value is $EnumName$ {
+  return $EnumName$Values.includes(value as $EnumName$);
+}
+
+// ============================================================
+// Mapa de etiquetas para UI (i18n-ready)
+// ============================================================
+export const $EnumName$Labels: Record<$EnumName$, string> = {
+  [$EnumName$.Pendiente]:  'Pendiente',
+  [$EnumName$.Procesando]: 'En proceso',
+  [$EnumName$.Enviado]:    'Enviado',
+  [$EnumName$.Entregado]:  'Entregado',
+  [$EnumName$.Cancelado]:  'Cancelado',
+};
+
+// Mapa de clases CSS para badges
+export const $EnumName$BadgeClass: Record<$EnumName$, string> = {
+  [$EnumName$.Pendiente]:  'badge bg-warning',
+  [$EnumName$.Procesando]: 'badge bg-info',
+  [$EnumName$.Enviado]:    'badge bg-primary',
+  [$EnumName$.Entregado]:  'badge bg-success',
+  [$EnumName$.Cancelado]:  'badge bg-danger',
+};
+
+// Uso:
+// const estado: $EnumName$ = $EnumName$.Pendiente;
+// const label = $EnumName$Labels[estado];   // 'Pendiente'
+// if (is$EnumName$(input)) { /* validado */ }
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

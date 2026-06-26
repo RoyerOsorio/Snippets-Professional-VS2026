@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Razor Pages Basic PageModel</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>PageModel ASP.NET Core 10 Razor Pages con OnGet, OnPost, BindProperty, validación y redirección</Description>
+      <Shortcut>rp-basic-pagemodel</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>PageName</ID><ToolTip>Nombre de la página (PascalCase)</ToolTip><Default>Contacto</Default>
+        </Literal>
+        <Literal>
+          <ID>BindModel</ID><ToolTip>Clase del modelo de binding</ToolTip><Default>ContactoInputModel</Default>
+        </Literal>
+        <Literal>
+          <ID>namespace</ID><ToolTip>Namespace de las páginas</ToolTip><Default>MyApp.Pages</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="CSharp"><![CDATA[using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace $namespace$;
+
+/// <summary>PageModel para la página $PageName$.</summary>
+public class $PageName$Model : PageModel
+{
+    private readonly IContactoService _service;
+    private readonly ILogger<$PageName$Model> _logger;
+
+    // Propiedad de binding para el formulario (POST)
+    [BindProperty]
+    public $BindModel$ Input { get; set; } = new();
+
+    // Datos solo para la vista (GET)
+    public string PageTitle { get; set; } = "$PageName$";
+
+    public $PageName$Model(
+        IContactoService service,
+        ILogger<$PageName$Model> logger)
+    {
+        _service = service;
+        _logger  = logger;
+    }
+
+    /// <summary>Handler GET: inicializar la página.</summary>
+    public async Task<IActionResult> OnGetAsync(CancellationToken ct)
+    {
+        // Cargar datos necesarios para la vista
+        await LoadPageDataAsync(ct);
+        return Page();
+    }
+
+    /// <summary>Handler POST: procesar el formulario.</summary>
+    public async Task<IActionResult> OnPostAsync(CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadPageDataAsync(ct);
+            return Page();
+        }
+
+        try
+        {
+            await _service.ProcessAsync(Input, ct);
+            TempData["Success"] = "Operación completada correctamente.";
+            return RedirectToPage("./Confirmacion");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al procesar $PageName$.");
+            ModelState.AddModelError(string.Empty, "Ocurrió un error. Inténtalo de nuevo.");
+            await LoadPageDataAsync(ct);
+            return Page();
+        }
+    }
+
+    // Método privado para cargar datos compartidos entre GET y POST fallido
+    private async Task LoadPageDataAsync(CancellationToken ct)
+    {
+        // TODO: cargar catálogos, datos de referencia, etc.
+        await Task.CompletedTask;
+    }
+    $end$
+}
+
+// ============================================================
+// Modelo de Input con validaciones DataAnnotations
+// ============================================================
+
+using System.ComponentModel.DataAnnotations;
+
+public class $BindModel$
+{
+    [Required(ErrorMessage = "El nombre es obligatorio.")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "El nombre debe tener entre 2 y 100 caracteres.")]
+    [Display(Name = "Nombre completo")]
+    public string Nombre { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El correo electrónico es obligatorio.")]
+    [EmailAddress(ErrorMessage = "Ingresa un correo electrónico válido.")]
+    [Display(Name = "Correo electrónico")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El mensaje es obligatorio.")]
+    [StringLength(500, MinimumLength = 10, ErrorMessage = "El mensaje debe tener entre 10 y 500 caracteres.")]
+    [Display(Name = "Mensaje")]
+    public string Mensaje { get; set; } = string.Empty;
+}]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Bootstrap 5 Advanced Dashboard</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Dashboard Bootstrap 5.3.3 completo con KPI cards, gráfica, tabla de datos y sidebar colapsable</Description>
+      <Shortcut>bs-advanced-dashboard</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>appName</ID><ToolTip>Nombre de la aplicación</ToolTip><Default>Panel de Control</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<!DOCTYPE html>
+<html lang="es" data-bs-theme="auto">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>$appName$</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    /* Dashboard layout */
+    .sidebar {
+      width: 260px;
+      min-height: 100vh;
+      transition: width .2s ease;
+      background: var(--bs-dark);
+      color: var(--bs-light);
+    }
+    .sidebar.collapsed { width: 60px; }
+    .sidebar .nav-link { color: rgba(255,255,255,.75); padding: .5rem 1rem; white-space: nowrap; overflow: hidden; }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.1); border-radius: .375rem; }
+    .sidebar .nav-text { transition: opacity .2s; }
+    .sidebar.collapsed .nav-text { opacity: 0; width: 0; }
+    .main-content { flex: 1; min-height: 100vh; background: var(--bs-body-bg); }
+    .kpi-card { border-left: 4px solid; }
+    .kpi-card.kpi-primary { border-color: var(--bs-primary); }
+    .kpi-card.kpi-success { border-color: var(--bs-success); }
+    .kpi-card.kpi-warning { border-color: var(--bs-warning); }
+    .kpi-card.kpi-danger  { border-color: var(--bs-danger); }
+  </style>
+</head>
+<body>
+<div class="d-flex">
+
+  <!-- ===  SIDEBAR === -->
+  <aside id="sidebar" class="sidebar d-flex flex-column" aria-label="Menú de navegación">
+    <!-- Brand -->
+    <div class="p-3 border-bottom border-secondary">
+      <a href="/" class="d-flex align-items-center text-white text-decoration-none gap-2">
+        <i class="bi bi-grid-3x3-gap fs-4"></i>
+        <span class="nav-text fw-bold">$appName$</span>
+      </a>
+    </div>
+
+    <!-- Navegación -->
+    <nav class="flex-grow-1 p-2" aria-label="Menú lateral">
+      <ul class="nav flex-column gap-1">
+        <li class="nav-item">
+          <a class="nav-link active d-flex align-items-center gap-2" href="/dashboard" aria-current="page">
+            <i class="bi bi-house-fill"></i>
+            <span class="nav-text">Inicio</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="/usuarios">
+            <i class="bi bi-people-fill"></i>
+            <span class="nav-text">Usuarios</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="/reportes">
+            <i class="bi bi-bar-chart-fill"></i>
+            <span class="nav-text">Reportes</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="/configuracion">
+            <i class="bi bi-gear-fill"></i>
+            <span class="nav-text">Configuración</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Usuario -->
+    <div class="p-3 border-top border-secondary">
+      <div class="d-flex align-items-center gap-2">
+        <img src="/img/avatar.webp" alt="Avatar de Usuario" width="32" height="32" class="rounded-circle" />
+        <div class="nav-text">
+          <div class="text-white small fw-semibold">Juan Pérez</div>
+          <div class="text-muted small">Administrador</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- === MAIN CONTENT === -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="bg-body border-bottom px-4 py-3 d-flex align-items-center gap-3 sticky-top">
+      <button class="btn btn-sm btn-outline-secondary"
+              id="sidebar-toggle"
+              aria-expanded="true"
+              aria-controls="sidebar"
+              aria-label="Colapsar menú lateral">
+        <i class="bi bi-layout-sidebar-inset" aria-hidden="true"></i>
+      </button>
+
+      <nav aria-label="Ruta de navegación">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="/dashboard">Inicio</a></li>
+          <li class="breadcrumb-item active" aria-current="page">$appName$</li>
+        </ol>
+      </nav>
+
+      <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary position-relative" aria-label="Notificaciones (3 sin leer)">
+          <i class="bi bi-bell" aria-hidden="true"></i>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            3 <span class="visually-hidden">notificaciones sin leer</span>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="p-4" id="main-content" tabindex="-1">
+
+      <!-- KPIs -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="card kpi-card kpi-primary h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <p class="text-muted small mb-1">Total Usuarios</p>
+                  <h3 class="h2 mb-0 fw-bold">1,284</h3>
+                  <small class="text-success"><i class="bi bi-arrow-up"></i> 12% este mes</small>
+                </div>
+                <div class="rounded p-2 bg-primary bg-opacity-10">
+                  <i class="bi bi-people text-primary fs-4" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card kpi-card kpi-success h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <p class="text-muted small mb-1">Ingresos</p>
+                  <h3 class="h2 mb-0 fw-bold">$48,230</h3>
+                  <small class="text-success"><i class="bi bi-arrow-up"></i> 8% este mes</small>
+                </div>
+                <div class="rounded p-2 bg-success bg-opacity-10">
+                  <i class="bi bi-currency-dollar text-success fs-4" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card kpi-card kpi-warning h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <p class="text-muted small mb-1">Pedidos</p>
+                  <h3 class="h2 mb-0 fw-bold">364</h3>
+                  <small class="text-warning"><i class="bi bi-dash"></i> 0% este mes</small>
+                </div>
+                <div class="rounded p-2 bg-warning bg-opacity-10">
+                  <i class="bi bi-bag text-warning fs-4" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="card kpi-card kpi-danger h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <p class="text-muted small mb-1">Cancelaciones</p>
+                  <h3 class="h2 mb-0 fw-bold">28</h3>
+                  <small class="text-danger"><i class="bi bi-arrow-down"></i> 3% este mes</small>
+                </div>
+                <div class="rounded p-2 bg-danger bg-opacity-10">
+                  <i class="bi bi-x-circle text-danger fs-4" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de datos recientes -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
+          <h2 class="h5 mb-0">Actividad Reciente</h2>
+          <button class="btn btn-sm btn-outline-primary">Ver todo</button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" aria-label="Tabla de actividad reciente">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Usuario</th>
+                  <th scope="col">Acción</th>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><small class="text-muted">001</small></td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <img src="/img/avatar1.webp" alt="" width="32" height="32" class="rounded-circle" aria-hidden="true" />
+                      <span>María García</span>
+                    </div>
+                  </td>
+                  <td>Creó nuevo pedido</td>
+                  <td><time datetime="2026-01-15">15 ene 2026</time></td>
+                  <td><span class="badge bg-success-subtle text-success">Completado</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-ghost" aria-label="Ver detalles del pedido 001">
+                      <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                  </td>
+                </tr>
+                $end$
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Toggle sidebar
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const sidebar = document.getElementById('sidebar');
+  sidebarToggle?.addEventListener('click', () => {
+    const collapsed = sidebar?.classList.toggle('collapsed');
+    sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+  });
+</script>
+</body>
+</html>]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

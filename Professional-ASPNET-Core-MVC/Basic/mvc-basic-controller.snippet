@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>MVC Basic Controller</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Controlador ASP.NET Core 10 MVC básico con acciones CRUD, inyección de dependencias y async/await</Description>
+      <Shortcut>mvc-basic-controller</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>ControllerName</ID><ToolTip>Nombre del controlador (sin "Controller")</ToolTip><Default>Productos</Default>
+        </Literal>
+        <Literal>
+          <ID>ServiceInterface</ID><ToolTip>Interfaz del servicio a inyectar</ToolTip><Default>IProductoService</Default>
+        </Literal>
+        <Literal>
+          <ID>ViewModel</ID><ToolTip>ViewModel principal</ToolTip><Default>ProductoViewModel</Default>
+        </Literal>
+        <Literal>
+          <ID>namespace</ID><ToolTip>Namespace del controlador</ToolTip><Default>MyApp.Web.Controllers</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="CSharp"><![CDATA[using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
+namespace $namespace$;
+
+/// <summary>
+/// Controlador MVC para la gestión de $ControllerName$.
+/// </summary>
+[Authorize]
+public class $ControllerName$Controller : Controller
+{
+    private readonly $ServiceInterface$ _service;
+    private readonly ILogger<$ControllerName$Controller> _logger;
+
+    public $ControllerName$Controller(
+        $ServiceInterface$ service,
+        ILogger<$ControllerName$Controller> logger)
+    {
+        _service  = service;
+        _logger   = logger;
+    }
+
+    // GET: /$ControllerName$
+    [AllowAnonymous]
+    public async Task<IActionResult> Index(
+        string? searchString,
+        string? sortOrder,
+        int page = 1,
+        int pageSize = 20)
+    {
+        ViewData["CurrentFilter"] = searchString;
+        ViewData["CurrentSort"]   = sortOrder;
+
+        var result = await _service.GetPagedAsync(searchString, sortOrder, page, pageSize);
+        return View(result);
+    }
+
+    // GET: /$ControllerName$/Details/5
+    [AllowAnonymous]
+    public async Task<IActionResult> Details(int id)
+    {
+        var item = await _service.GetByIdAsync(id);
+        if (item is null)
+        {
+            _logger.LogWarning("$ControllerName$ con Id {Id} no encontrado.", id);
+            return NotFound();
+        }
+        return View(item);
+    }
+
+    // GET: /$ControllerName$/Create
+    public async Task<IActionResult> Create()
+    {
+        await PopulateSelectListsAsync();
+        return View(new $ViewModel$());
+    }
+
+    // POST: /$ControllerName$/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create($ViewModel$ model)
+    {
+        if (!ModelState.IsValid)
+        {
+            await PopulateSelectListsAsync();
+            return View(model);
+        }
+
+        try
+        {
+            await _service.CreateAsync(model);
+            TempData["Success"] = "Elemento creado correctamente.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear $ControllerName$.");
+            ModelState.AddModelError(string.Empty, "Ocurrió un error al guardar. Inténtalo de nuevo.");
+            await PopulateSelectListsAsync();
+            return View(model);
+        }
+    }
+
+    // GET: /$ControllerName$/Edit/5
+    public async Task<IActionResult> Edit(int id)
+    {
+        var item = await _service.GetByIdAsync(id);
+        if (item is null) return NotFound();
+        await PopulateSelectListsAsync();
+        return View(item);
+    }
+
+    // POST: /$ControllerName$/Edit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, $ViewModel$ model)
+    {
+        if (id != model.Id) return BadRequest();
+
+        if (!ModelState.IsValid)
+        {
+            await PopulateSelectListsAsync();
+            return View(model);
+        }
+
+        try
+        {
+            await _service.UpdateAsync(model);
+            TempData["Success"] = "Elemento actualizado correctamente.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar $ControllerName$ con Id {Id}.", id);
+            ModelState.AddModelError(string.Empty, "Error al actualizar. Inténtalo de nuevo.");
+            await PopulateSelectListsAsync();
+            return View(model);
+        }
+    }
+
+    // POST: /$ControllerName$/Delete/5
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        try
+        {
+            await _service.DeleteAsync(id);
+            TempData["Success"] = "Elemento eliminado correctamente.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al eliminar $ControllerName$ con Id {Id}.", id);
+            TempData["Error"] = "No se pudo eliminar el elemento.";
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
+    // Helper: poblar SelectLists para el ViewBag
+    private async Task PopulateSelectListsAsync()
+    {
+        var categorias = await _service.GetCategoriasAsync();
+        ViewBag.Categorias = new SelectList(categorias, "Id", "Nombre");
+    }
+    $end$
+}]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

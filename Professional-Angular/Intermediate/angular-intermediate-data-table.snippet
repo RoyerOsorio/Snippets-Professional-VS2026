@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Angular Data Table con Paginación</Title>
+      <Author>VS2026 Snippets Library</Author>
+      <Description>Componente de tabla de datos Angular 19+ con paginación, búsqueda, ordenación, accesibilidad WCAG y exportación.</Description>
+      <Shortcut>angular-intermediate-data-table</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>TableName</ID>
+          <ToolTip>Nombre de la tabla (ej: UsersTable)</ToolTip>
+          <Default>UsersTable</Default>
+        </Literal>
+        <Literal>
+          <ID>Selector</ID>
+          <ToolTip>Selector del componente (ej: app-users-table)</ToolTip>
+          <Default>app-users-table</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="TypeScript">
+        <![CDATA[// $TableName$.component.ts
+import {
+  Component,
+  input,
+  output,
+  signal,
+  computed,
+  OnChanges,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+// ---- Columna de tabla genérica ----
+export interface TableColumn<T = Record<string, unknown>> {
+  key: keyof T & string;
+  label: string;
+  sortable?: boolean;
+  format?: (value: unknown, row: T) => string;
+  width?: string;
+}
+
+export interface SortEvent {
+  column: string;
+  direction: 'asc' | 'desc';
+}
+
+export interface PageEvent {
+  page: number;
+  pageSize: number;
+}
+
+// ---- Tipos de la entidad de ejemplo ----
+export interface TableRow {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+@Component({
+  selector: '$Selector$',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <section aria-label="Tabla de datos">
+
+      <!-- Barra de herramientas -->
+      <div class="table-toolbar">
+        <div class="table-toolbar__search">
+          <label [for]="searchId" class="visually-hidden">Buscar registros</label>
+          <input
+            [id]="searchId"
+            type="search"
+            class="form-control form-control-sm"
+            placeholder="Buscar..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearch()"
+            aria-label="Buscar en la tabla" />
+        </div>
+
+        <div class="table-toolbar__actions">
+          <span class="text-muted small">
+            {{ totalItems() }} registro{{ totalItems() !== 1 ? 's' : '' }}
+          </span>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            (click)="exportCsv.emit()"
+            aria-label="Exportar a CSV">
+            Exportar CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-responsive">
+        <table
+          class="table table-hover table-striped align-middle"
+          [attr.aria-label]="tableLabel()"
+          [attr.aria-rowcount]="totalItems()"
+          aria-live="polite">
+
+          <caption class="visually-hidden">{{ tableLabel() }}</caption>
+
+          <thead class="table-dark">
+            <tr>
+              @for (col of columns(); track col.key) {
+                <th
+                  scope="col"
+                  [style.width]="col.width ?? 'auto'"
+                  [attr.aria-sort]="getSortAria(col.key)">
+                  @if (col.sortable !== false) {
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm text-white p-0 fw-semibold"
+                      (click)="onSort(col.key)"
+                      [attr.aria-label]="'Ordenar por ' + col.label">
+                      {{ col.label }}
+                      <span aria-hidden="true" class="ms-1">
+                        {{ getSortIcon(col.key) }}
+                      </span>
+                    </button>
+                  } @else {
+                    {{ col.label }}
+                  }
+                </th>
+              }
+              @if (showActions()) {
+                <th scope="col" class="text-end">Acciones</th>
+              }
+            </tr>
+          </thead>
+
+          <tbody>
+            @if (loading()) {
+              @for (i of skeletonRows; track i) {
+                <tr aria-hidden="true">
+                  @for (col of columns(); track col.key) {
+                    <td><div class="skeleton-cell"></div></td>
+                  }
+                  @if (showActions()) {
+                    <td><div class="skeleton-cell skeleton-cell--short"></div></td>
+                  }
+                </tr>
+              }
+            } @else if (rows().length === 0) {
+              <tr>
+                <td [attr.colspan]="colSpan()" class="text-center py-5 text-muted">
+                  No se encontraron registros.
+                </td>
+              </tr>
+            } @else {
+              @for (row of rows(); track row['id']) {
+                <tr [attr.aria-rowindex]="$index + 1">
+                  @for (col of columns(); track col.key) {
+                    <td>{{ formatCell(col, row) }}</td>
+                  }
+                  @if (showActions()) {
+                    <td class="text-end">
+                      <div class="d-flex justify-content-end gap-1">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary"
+                          (click)="edit.emit(row)"
+                          [attr.aria-label]="'Editar registro'">
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger"
+                          (click)="delete.emit(row['id'] as number)"
+                          [attr.aria-label]="'Eliminar registro'">
+                          Eliminar
+                        </button>
+                      </div>
+                    </td>
+                  }
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      @if (totalPages() > 1) {
+        <nav aria-label="Navegación de páginas" class="d-flex justify-content-between align-items-center mt-3">
+          <div class="d-flex align-items-center gap-2">
+            <label for="pageSize" class="form-label mb-0 small">Por página:</label>
+            <select
+              id="pageSize"
+              class="form-select form-select-sm w-auto"
+              [(ngModel)]="currentPageSize"
+              (ngModelChange)="onPageSizeChange()">
+              @for (size of pageSizes; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </div>
+
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="currentPage() === 1">
+              <button
+                type="button"
+                class="page-link"
+                (click)="onPageChange(currentPage() - 1)"
+                [disabled]="currentPage() === 1"
+                aria-label="Página anterior">
+                &laquo;
+              </button>
+            </li>
+            @for (p of visiblePages(); track p) {
+              <li class="page-item" [class.active]="p === currentPage()">
+                <button
+                  type="button"
+                  class="page-link"
+                  (click)="onPageChange(p)"
+                  [attr.aria-current]="p === currentPage() ? 'page' : null"
+                  [attr.aria-label]="'Ir a página ' + p">
+                  {{ p }}
+                </button>
+              </li>
+            }
+            <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+              <button
+                type="button"
+                class="page-link"
+                (click)="onPageChange(currentPage() + 1)"
+                [disabled]="currentPage() === totalPages()"
+                aria-label="Página siguiente">
+                &raquo;
+              </button>
+            </li>
+          </ul>
+
+          <span class="text-muted small">
+            Página {{ currentPage() }} de {{ totalPages() }}
+          </span>
+        </nav>
+      }
+    </section>
+  `,
+  styles: [`
+    .table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap; }
+    .table-toolbar__search { flex: 1; max-width: 320px; }
+    .table-toolbar__actions { display: flex; align-items: center; gap: 0.75rem; }
+    .skeleton-cell { background: #e9ecef; border-radius: 4px; height: 1.1rem; animation: pulse 1.5s ease-in-out infinite; }
+    .skeleton-cell--short { width: 60%; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  `],
+})
+export class $TableName$Component implements OnChanges {
+  // ---- Inputs ----
+  rows = input<TableRow[]>([]);
+  columns = input<TableColumn<TableRow>[]>([]);
+  totalItems = input<number>(0);
+  loading = input<boolean>(false);
+  showActions = input<boolean>(true);
+
+  // ---- Outputs ----
+  edit = output<TableRow>();
+  delete = output<number>();
+  sortChange = output<SortEvent>();
+  pageChange = output<PageEvent>();
+  exportCsv = output<void>();
+
+  // ---- Estado interno ----
+  protected searchTerm = '';
+  protected currentPageSize = 20;
+  protected readonly pageSizes = [10, 20, 50, 100];
+  protected readonly skeletonRows = Array(5).fill(0);
+  protected readonly searchId = `search-${Math.random().toString(36).slice(2)}`;
+
+  private readonly _currentPage = signal(1);
+  private readonly _sortColumn = signal('');
+  private readonly _sortDirection = signal<'asc' | 'desc'>('asc');
+
+  readonly currentPage = this._currentPage.asReadonly();
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.totalItems() / this.currentPageSize))
+  );
+  readonly tableLabel = computed(() =>
+    `Tabla de datos — ${this.totalItems()} registros`
+  );
+  readonly colSpan = computed(() =>
+    this.columns().length + (this.showActions() ? 1 : 0)
+  );
+  readonly visiblePages = computed(() => {
+    const total = this.totalPages();
+    const current = this._currentPage();
+    const delta = 2;
+    const range: number[] = [];
+    for (
+      let i = Math.max(1, current - delta);
+      i <= Math.min(total, current + delta);
+      i++
+    ) range.push(i);
+    return range;
+  });
+
+  ngOnChanges(): void {
+    // Resetear a primera página cuando cambia el origen de datos
+  }
+
+  onSearch(): void {
+    this._currentPage.set(1);
+    this.pageChange.emit({ page: 1, pageSize: this.currentPageSize });
+  }
+
+  onSort(column: string): void {
+    const dir =
+      this._sortColumn() === column && this._sortDirection() === 'asc'
+        ? 'desc'
+        : 'asc';
+    this._sortColumn.set(column);
+    this._sortDirection.set(dir);
+    this.sortChange.emit({ column, direction: dir });
+  }
+
+  onPageChange(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this._currentPage.set(page);
+    this.pageChange.emit({ page, pageSize: this.currentPageSize });
+  }
+
+  onPageSizeChange(): void {
+    this._currentPage.set(1);
+    this.pageChange.emit({ page: 1, pageSize: this.currentPageSize });
+  }
+
+  getSortIcon(column: string): string {
+    if (this._sortColumn() !== column) return '↕';
+    return this._sortDirection() === 'asc' ? '↑' : '↓';
+  }
+
+  getSortAria(column: string): string | null {
+    if (this._sortColumn() !== column) return null;
+    return this._sortDirection() === 'asc' ? 'ascending' : 'descending';
+  }
+
+  formatCell(col: TableColumn<TableRow>, row: TableRow): string {
+    const value = row[col.key as keyof TableRow];
+    if (col.format) return col.format(value, row);
+    if (typeof value === 'boolean') return value ? 'Sí' : 'No';
+    return value != null ? String(value) : '';
+  }
+}
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

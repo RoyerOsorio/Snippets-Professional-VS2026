@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>MVC Advanced Clean Architecture Service</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Servicio de dominio con Clean Architecture: interfaz, implementación, Result pattern, validación y repositorio</Description>
+      <Shortcut>mvc-advanced-clean-architecture</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>EntityName</ID><ToolTip>Nombre de la entidad de dominio</ToolTip><Default>Producto</Default>
+        </Literal>
+        <Literal>
+          <ID>namespace</ID><ToolTip>Namespace base de la aplicación</ToolTip><Default>MyApp</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="CSharp"><![CDATA[// ============================================================
+// DOMAIN LAYER: $namespace$.Domain
+// ============================================================
+
+namespace $namespace$.Domain.Entities;
+
+/// <summary>Entidad de dominio con invariantes protegidos.</summary>
+public sealed class $EntityName$ : BaseEntity
+{
+    // Constructor privado: solo fábricas pueden crear instancias
+    private $EntityName$() { }
+
+    public string  Nombre      { get; private set; } = string.Empty;
+    public string  Descripcion { get; private set; } = string.Empty;
+    public decimal Precio      { get; private set; }
+    public bool    EsActivo    { get; private set; }
+
+    // Fábrica estática con validación de invariantes
+    public static Result<$EntityName$> Create(string nombre, string descripcion, decimal precio)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+            return Result<$EntityName$>.Failure("El nombre es obligatorio.");
+        if (precio < 0)
+            return Result<$EntityName$>.Failure("El precio no puede ser negativo.");
+
+        return Result<$EntityName$>.Success(new $EntityName$
+        {
+            Nombre      = nombre.Trim(),
+            Descripcion = descripcion.Trim(),
+            Precio      = precio,
+            EsActivo    = true
+        });
+    }
+
+    public Result Update(string nombre, string descripcion, decimal precio)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+            return Result.Failure("El nombre es obligatorio.");
+
+        Nombre      = nombre.Trim();
+        Descripcion = descripcion.Trim();
+        Precio      = precio;
+        UpdatedAt   = DateTime.UtcNow;
+
+        return Result.Success();
+    }
+
+    public void Deactivate() { EsActivo = false; UpdatedAt = DateTime.UtcNow; }
+    public void Activate()   { EsActivo = true;  UpdatedAt = DateTime.UtcNow; }
+}
+
+// ============================================================
+// DOMAIN LAYER: Result Pattern
+// ============================================================
+
+namespace $namespace$.Domain.Common;
+
+public class Result
+{
+    protected Result(bool succeeded, string? error = null)
+    { IsSuccess = succeeded; Error = error; }
+
+    public bool    IsSuccess { get; }
+    public bool    IsFailure => !IsSuccess;
+    public string? Error     { get; }
+
+    public static Result Success()              => new(true);
+    public static Result Failure(string error) => new(false, error);
+}
+
+public class Result<T> : Result
+{
+    private Result(bool ok, T? value = default, string? error = null)
+        : base(ok, error) { Value = value; }
+
+    public T? Value { get; }
+
+    public static Result<T> Success(T value)   => new(true, value);
+    public static new Result<T> Failure(string error) => new(false, error: error);
+}
+
+// ============================================================
+// APPLICATION LAYER: Interface del Repositorio
+// ============================================================
+
+namespace $namespace$.Application.Interfaces;
+
+public interface I$EntityName$Repository
+{
+    Task<$EntityName$?>              GetByIdAsync(int id, CancellationToken ct = default);
+    Task<IReadOnlyList<$EntityName$>> GetAllAsync(CancellationToken ct = default);
+    Task<PagedResult<$EntityName$>>  GetPagedAsync(string? search, int page, int size, CancellationToken ct);
+    Task<$EntityName$>               AddAsync($EntityName$ entity, CancellationToken ct = default);
+    Task                             UpdateAsync($EntityName$ entity, CancellationToken ct = default);
+    Task                             DeleteAsync($EntityName$ entity, CancellationToken ct = default);
+    Task<bool>                       ExistsAsync(int id, CancellationToken ct = default);
+}
+
+// ============================================================
+// APPLICATION LAYER: Servicio de aplicación
+// ============================================================
+
+namespace $namespace$.Application.Services;
+
+public interface I$EntityName$Service
+{
+    Task<PagedResult<$EntityName$Dto>> GetPagedAsync(string? search, int page, int size, CancellationToken ct);
+    Task<$EntityName$Dto?>             GetByIdAsync(int id, CancellationToken ct);
+    Task<Result<$EntityName$Dto>>      CreateAsync(Create$EntityName$Request req, CancellationToken ct);
+    Task<Result<$EntityName$Dto>>      UpdateAsync(int id, Create$EntityName$Request req, CancellationToken ct);
+    Task<Result>                       DeleteAsync(int id, CancellationToken ct);
+}
+
+public sealed class $EntityName$Service : I$EntityName$Service
+{
+    private readonly I$EntityName$Repository _repo;
+    private readonly IMapper                 _mapper;
+    private readonly ILogger<$EntityName$Service> _logger;
+
+    public $EntityName$Service(
+        I$EntityName$Repository repo,
+        IMapper mapper,
+        ILogger<$EntityName$Service> logger)
+    {
+        _repo   = repo;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<PagedResult<$EntityName$Dto>> GetPagedAsync(
+        string? search, int page, int size, CancellationToken ct)
+        => await _repo.GetPagedAsync(search, page, size, ct)
+                      .ContinueWith(t => _mapper.MapPagedResult<$EntityName$, $EntityName$Dto>(t.Result), ct);
+
+    public async Task<$EntityName$Dto?> GetByIdAsync(int id, CancellationToken ct)
+    {
+        var entity = await _repo.GetByIdAsync(id, ct);
+        return entity is null ? null : _mapper.Map<$EntityName$Dto>(entity);
+    }
+
+    public async Task<Result<$EntityName$Dto>> CreateAsync(Create$EntityName$Request req, CancellationToken ct)
+    {
+        var result = $EntityName$.Create(req.Nombre, req.Descripcion, req.Precio);
+        if (result.IsFailure) return Result<$EntityName$Dto>.Failure(result.Error!);
+
+        var created = await _repo.AddAsync(result.Value!, ct);
+        _logger.LogInformation("$EntityName$ creado con Id {Id}.", created.Id);
+        return Result<$EntityName$Dto>.Success(_mapper.Map<$EntityName$Dto>(created));
+    }
+
+    public async Task<Result<$EntityName$Dto>> UpdateAsync(int id, Create$EntityName$Request req, CancellationToken ct)
+    {
+        var entity = await _repo.GetByIdAsync(id, ct);
+        if (entity is null) return Result<$EntityName$Dto>.Failure("Elemento no encontrado.");
+
+        var update = entity.Update(req.Nombre, req.Descripcion, req.Precio);
+        if (update.IsFailure) return Result<$EntityName$Dto>.Failure(update.Error!);
+
+        await _repo.UpdateAsync(entity, ct);
+        return Result<$EntityName$Dto>.Success(_mapper.Map<$EntityName$Dto>(entity));
+    }
+
+    public async Task<Result> DeleteAsync(int id, CancellationToken ct)
+    {
+        var entity = await _repo.GetByIdAsync(id, ct);
+        if (entity is null) return Result.Failure("Elemento no encontrado.");
+        await _repo.DeleteAsync(entity, ct);
+        return Result.Success();
+    }
+    $end$
+}]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Bootstrap 5 Basic Container</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Contenedor Bootstrap 5.3.3 responsive con variantes fluid, xl, xxl y breakpoints configurables</Description>
+      <Shortcut>bs-basic-container</Shortcut>
+      <SnippetTypes><SnippetType>Expansion</SnippetType></SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>variant</ID>
+          <ToolTip>Variante del contenedor: container, container-fluid, container-sm, container-md, container-lg, container-xl, container-xxl</ToolTip>
+          <Default>container</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<!-- Contenedor Bootstrap 5.3.3 - Mobile First -->
+<div class="$variant$">
+  <!-- Ancho máximo responsive por breakpoint:
+       container    : 100% hasta sm, luego 540/720/960/1140/1320px
+       container-fluid: siempre 100%
+       container-xxl: 100% hasta xxl, luego 1320px -->
+  $end$
+</div>]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

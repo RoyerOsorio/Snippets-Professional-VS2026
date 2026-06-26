@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>TS Decoradores Empresariales</Title>
+      <Author>VS2026 Snippets Library</Author>
+      <Description>Colección de decoradores TypeScript para logging, caché, throttle, retry, validación y medición de rendimiento.</Description>
+      <Shortcut>ts-intermediate-decorator</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Code Language="TypeScript">
+        <![CDATA[// ============================================================
+// Decoradores TypeScript empresariales (Stage 3 / experimental)
+// tsconfig: "experimentalDecorators": true, "emitDecoratorMetadata": true
+// ============================================================
+
+// ------------------------------------------------------------------
+// Tipos auxiliares
+// ------------------------------------------------------------------
+type AnyFunction = (...args: unknown[]) => unknown;
+type AsyncFunction = (...args: unknown[]) => Promise<unknown>;
+
+// ------------------------------------------------------------------
+// @Log — Registra llamada, argumentos y resultado/error
+// ------------------------------------------------------------------
+export function Log(prefix?: string): MethodDecorator {
+  return function (target, propertyKey, descriptor: PropertyDescriptor) {
+    const original: AnyFunction = descriptor.value;
+    const tag = prefix ?? `${String(target.constructor.name)}.${String(propertyKey)}`;
+
+    descriptor.value = function (...args: unknown[]) {
+      console.group(`[Log] ${tag}`);
+      console.log('Args:', JSON.stringify(args));
+      try {
+        const result = original.apply(this, args);
+        if (result instanceof Promise) {
+          return result
+            .then((val) => { console.log('Result:', val); console.groupEnd(); return val; })
+            .catch((err) => { console.error('Error:', err); console.groupEnd(); throw err; });
+        }
+        console.log('Result:', result);
+        console.groupEnd();
+        return result;
+      } catch (err) {
+        console.error('Error:', err);
+        console.groupEnd();
+        throw err;
+      }
+    };
+    return descriptor;
+  };
+}
+
+// ------------------------------------------------------------------
+// @Memoize — Caché en memoria por combinación de argumentos
+// ------------------------------------------------------------------
+export function Memoize(ttlMs: number = 60_000): MethodDecorator {
+  return function (_target, _propertyKey, descriptor: PropertyDescriptor) {
+    const original: AnyFunction = descriptor.value;
+    const cache = new Map<string, { value: unknown; expiresAt: number }>();
+
+    descriptor.value = function (...args: unknown[]) {
+      const key = JSON.stringify(args);
+      const cached = cache.get(key);
+      if (cached && Date.now() < cached.expiresAt) return cached.value;
+      const result = original.apply(this, args);
+      if (result instanceof Promise) {
+        return result.then((val) => {
+          cache.set(key, { value: val, expiresAt: Date.now() + ttlMs });
+          return val;
+        });
+      }
+      cache.set(key, { value: result, expiresAt: Date.now() + ttlMs });
+      return result;
+    };
+    return descriptor;
+  };
+}
+
+// ------------------------------------------------------------------
+// @Throttle — Limita frecuencia de ejecución
+// ------------------------------------------------------------------
+export function Throttle(limitMs: number = 300): MethodDecorator {
+  return function (_target, _propertyKey, descriptor: PropertyDescriptor) {
+    const original: AnyFunction = descriptor.value;
+    let lastCall = 0;
+
+    descriptor.value = function (...args: unknown[]) {
+      const now = Date.now();
+      if (now - lastCall < limitMs) return;
+      lastCall = now;
+      return original.apply(this, args);
+    };
+    return descriptor;
+  };
+}
+
+// ------------------------------------------------------------------
+// @Debounce — Retrasa ejecución hasta que cesen los llamados
+// ------------------------------------------------------------------
+export function Debounce(delayMs: number = 300): MethodDecorator {
+  return function (_target, _propertyKey, descriptor: PropertyDescriptor) {
+    const original: AnyFunction = descriptor.value;
+    let timer: ReturnType<typeof setTimeout>;
+
+    descriptor.value = function (...args: unknown[]) {
+      clearTimeout(timer);
+      timer = setTimeout(() => original.apply(this, args), delayMs);
+    };
+    return descriptor;
+  };
+}
+
+// ------------------------------------------------------------------
+// @Retry — Reintenta N veces ante errores asíncronos
+// ------------------------------------------------------------------
+export function Retry(attempts: number = 3, delayMs: number = 500): MethodDecorator {
+  return function (_target, _propertyKey, descriptor: PropertyDescriptor) {
+    const original = descriptor.value as AsyncFunction;
+
+    descriptor.value = async function (...args: unknown[]) {
+      let lastError: unknown;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          return await original.apply(this, args);
+        } catch (err) {
+          lastError = err;
+          if (i < attempts - 1) {
+            await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
+          }
+        }
+      }
+      throw lastError;
+    };
+    return descriptor;
+  };
+}
+
+// ------------------------------------------------------------------
+// @Measure — Mide tiempo de ejecución
+// ------------------------------------------------------------------
+export function Measure(label?: string): MethodDecorator {
+  return function (target, propertyKey, descriptor: PropertyDescriptor) {
+    const original: AnyFunction = descriptor.value;
+    const tag = label ?? `${String(target.constructor.name)}.${String(propertyKey)}`;
+
+    descriptor.value = function (...args: unknown[]) {
+      const start = performance.now();
+      const result = original.apply(this, args);
+      if (result instanceof Promise) {
+        return result.finally(() =>
+          console.log(`[Measure] ${tag}: ${(performance.now() - start).toFixed(2)}ms`)
+        );
+      }
+      console.log(`[Measure] ${tag}: ${(performance.now() - start).toFixed(2)}ms`);
+      return result;
+    };
+    return descriptor;
+  };
+}
+
+// ------------------------------------------------------------------
+// Ejemplo de uso
+// ------------------------------------------------------------------
+class ExampleService {
+  @Log('ExampleService.fetchData')
+  @Retry(3, 200)
+  @Measure()
+  async fetchData(id: number): Promise<{ id: number; name: string }> {
+    const res = await fetch(`/api/items/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  @Memoize(30_000)
+  getConfig(key: string): string {
+    return `config-${key}`;
+  }
+
+  @Debounce(400)
+  onSearchInput(term: string): void {
+    console.log('Buscando:', term);
+  }
+
+  @Throttle(1000)
+  onScroll(): void {
+    console.log('Scroll event');
+  }
+}
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

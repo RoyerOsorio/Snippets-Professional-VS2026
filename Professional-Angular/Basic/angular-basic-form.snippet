@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>Angular Reactive Form con Validación</Title>
+      <Author>VS2026 Snippets Library</Author>
+      <Description>Formulario reactivo Angular 19+ con validadores síncronos/asíncronos, manejo de errores, ARIA accesible y submit tipado.</Description>
+      <Shortcut>angular-basic-form</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>FormName</ID>
+          <ToolTip>Nombre del formulario en PascalCase (ej: UserForm)</ToolTip>
+          <Default>UserForm</Default>
+        </Literal>
+        <Literal>
+          <ID>Selector</ID>
+          <ToolTip>Selector del componente (ej: app-user-form)</ToolTip>
+          <Default>app-user-form</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="TypeScript">
+        <![CDATA[// $FormName$.component.ts
+import {
+  Component,
+  output,
+  signal,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+// ---- Tipado del formulario ----
+interface $FormName$Value {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  acceptTerms: boolean;
+}
+
+// ---- Validador personalizado ----
+function mexicanPhoneValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const phone = String(control.value).replace(/\D/g, '');
+  return /^\d{10}$/.test(phone) ? null : { invalidPhone: true };
+}
+
+@Component({
+  selector: '$Selector$',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      aria-label="Formulario de contacto"
+      class="form">
+
+      <!-- Estado global -->
+      @if (submitError()) {
+        <div role="alert" aria-live="assertive" class="form__alert form__alert--error">
+          {{ submitError() }}
+        </div>
+      }
+      @if (submitSuccess()) {
+        <div role="status" aria-live="polite" class="form__alert form__alert--success">
+          Formulario enviado correctamente.
+        </div>
+      }
+
+      <!-- Nombre -->
+      <div class="form__group">
+        <label for="name" class="form__label">
+          Nombre <span aria-hidden="true" class="required">*</span>
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          class="form__input"
+          [class.form__input--error]="isInvalid('name')"
+          autocomplete="name"
+          [attr.aria-invalid]="isInvalid('name')"
+          aria-describedby="name-error"
+          placeholder="Tu nombre completo" />
+        @if (isInvalid('name')) {
+          <span id="name-error" class="form__error" role="alert">
+            {{ getError('name') }}
+          </span>
+        }
+      </div>
+
+      <!-- Email -->
+      <div class="form__group">
+        <label for="email" class="form__label">
+          Correo electrónico <span aria-hidden="true" class="required">*</span>
+        </label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="form__input"
+          [class.form__input--error]="isInvalid('email')"
+          autocomplete="email"
+          [attr.aria-invalid]="isInvalid('email')"
+          aria-describedby="email-error"
+          placeholder="correo@ejemplo.com" />
+        @if (isInvalid('email')) {
+          <span id="email-error" class="form__error" role="alert">
+            {{ getError('email') }}
+          </span>
+        }
+      </div>
+
+      <!-- Teléfono -->
+      <div class="form__group">
+        <label for="phone" class="form__label">Teléfono</label>
+        <input
+          id="phone"
+          type="tel"
+          formControlName="phone"
+          class="form__input"
+          [class.form__input--error]="isInvalid('phone')"
+          autocomplete="tel"
+          [attr.aria-invalid]="isInvalid('phone')"
+          aria-describedby="phone-error phone-hint"
+          placeholder="5512345678" />
+        <span id="phone-hint" class="form__hint">10 dígitos sin espacios</span>
+        @if (isInvalid('phone')) {
+          <span id="phone-error" class="form__error" role="alert">
+            {{ getError('phone') }}
+          </span>
+        }
+      </div>
+
+      <!-- Mensaje -->
+      <div class="form__group">
+        <label for="message" class="form__label">
+          Mensaje <span aria-hidden="true" class="required">*</span>
+        </label>
+        <textarea
+          id="message"
+          formControlName="message"
+          class="form__input form__input--textarea"
+          [class.form__input--error]="isInvalid('message')"
+          [attr.aria-invalid]="isInvalid('message')"
+          aria-describedby="message-error"
+          rows="5"
+          placeholder="Escribe tu mensaje..."></textarea>
+        @if (isInvalid('message')) {
+          <span id="message-error" class="form__error" role="alert">
+            {{ getError('message') }}
+          </span>
+        }
+      </div>
+
+      <!-- Términos -->
+      <div class="form__group form__group--checkbox">
+        <input
+          id="acceptTerms"
+          type="checkbox"
+          formControlName="acceptTerms"
+          class="form__checkbox"
+          [attr.aria-invalid]="isInvalid('acceptTerms')"
+          aria-describedby="terms-error" />
+        <label for="acceptTerms" class="form__label--inline">
+          Acepto los <a href="/terminos" target="_blank">términos y condiciones</a>
+        </label>
+        @if (isInvalid('acceptTerms')) {
+          <span id="terms-error" class="form__error" role="alert">
+            Debes aceptar los términos para continuar.
+          </span>
+        }
+      </div>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        class="form__submit"
+        [disabled]="loading() || form.invalid"
+        [attr.aria-busy]="loading()">
+        @if (loading()) {
+          <span aria-hidden="true" class="spinner"></span>
+          Enviando...
+        } @else {
+          Enviar mensaje
+        }
+      </button>
+    </form>
+  `,
+  styles: [`
+    .form { max-width: 540px; display: flex; flex-direction: column; gap: 1.25rem; }
+    .form__group { display: flex; flex-direction: column; gap: 0.25rem; }
+    .form__label { font-weight: 600; font-size: 0.9rem; }
+    .form__input { padding: 0.625rem 0.75rem; border: 1px solid #ced4da; border-radius: 0.375rem; font-size: 1rem; }
+    .form__input--error { border-color: #dc3545; }
+    .form__input--textarea { resize: vertical; }
+    .form__error { color: #dc3545; font-size: 0.8rem; }
+    .form__hint { color: #6c757d; font-size: 0.8rem; }
+    .form__alert { padding: 0.75rem 1rem; border-radius: 0.375rem; }
+    .form__alert--error { background: #f8d7da; color: #842029; }
+    .form__alert--success { background: #d1e7dd; color: #0f5132; }
+    .form__group--checkbox { flex-direction: row; align-items: center; gap: 0.5rem; }
+    .form__submit { padding: 0.75rem 1.5rem; background: #0d6efd; color: #fff; border: none; border-radius: 0.375rem; font-size: 1rem; cursor: pointer; }
+    .form__submit:disabled { opacity: 0.65; cursor: not-allowed; }
+    .required { color: #dc3545; }
+  `],
+})
+export class $FormName$Component {
+  private readonly fb = inject(FormBuilder);
+
+  submitted = output<$FormName$Value>();
+
+  loading = signal(false);
+  submitError = signal<string | null>(null);
+  submitSuccess = signal(false);
+
+  form: FormGroup = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+    email: ['', [Validators.required, Validators.email]],
+    phone: ['', [mexicanPhoneValidator]],
+    message: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]],
+    acceptTerms: [false, [Validators.requiredTrue]],
+  });
+
+  isInvalid(field: string): boolean {
+    const ctrl = this.form.get(field);
+    return !!ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched);
+  }
+
+  getError(field: string): string {
+    const ctrl = this.form.get(field);
+    if (!ctrl?.errors) return '';
+    const errors: Record<string, string> = {
+      required: 'Este campo es obligatorio.',
+      email: 'Ingresa un correo electrónico válido.',
+      minlength: `Mínimo ${ctrl.errors['minlength']?.requiredLength} caracteres.`,
+      maxlength: `Máximo ${ctrl.errors['maxlength']?.requiredLength} caracteres.`,
+      invalidPhone: 'Teléfono inválido. Ingresa 10 dígitos.',
+    };
+    const firstKey = Object.keys(ctrl.errors)[0];
+    return errors[firstKey] ?? 'Campo inválido.';
+  }
+
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.loading.set(true);
+    this.submitError.set(null);
+    this.submitSuccess.set(false);
+
+    try {
+      // Simular envío — reemplazar con llamada al servicio
+      await new Promise((r) => setTimeout(r, 1000));
+      this.submitted.emit(this.form.value as $FormName$Value);
+      this.submitSuccess.set(true);
+      this.form.reset();
+    } catch {
+      this.submitError.set('Error al enviar el formulario. Intenta de nuevo.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+}
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

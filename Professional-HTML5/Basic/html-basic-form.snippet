@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>HTML5 Basic Accessible Form</Title>
+      <Author>VS2026 Professional Snippets</Author>
+      <Description>Formulario HTML5 accesible con validación nativa, ARIA y semántica WCAG 2.2</Description>
+      <Shortcut>html-basic-form</Shortcut>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>formId</ID>
+          <ToolTip>ID único del formulario</ToolTip>
+          <Default>contactForm</Default>
+        </Literal>
+        <Literal>
+          <ID>formTitle</ID>
+          <ToolTip>Título descriptivo del formulario</ToolTip>
+          <Default>Formulario de Contacto</Default>
+        </Literal>
+        <Literal>
+          <ID>action</ID>
+          <ToolTip>URL de envío del formulario</ToolTip>
+          <Default>/contacto</Default>
+        </Literal>
+        <Literal>
+          <ID>method</ID>
+          <ToolTip>Método HTTP del formulario</ToolTip>
+          <Default>post</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="HTML"><![CDATA[<!-- Formulario accesible WCAG 2.2 - Nivel AA -->
+<section aria-labelledby="form-heading-$formId$">
+  <h2 id="form-heading-$formId$">$formTitle$</h2>
+
+  <form id="$formId$"
+        action="$action$"
+        method="$method$"
+        novalidate
+        aria-label="$formTitle$"
+        aria-describedby="$formId$-desc">
+
+    <p id="$formId$-desc" class="form-hint">
+      Los campos marcados con <abbr title="obligatorio" aria-label="obligatorio">*</abbr> son requeridos.
+    </p>
+
+    <!-- Grupo: Nombre completo -->
+    <div class="form-group">
+      <label for="fullName" class="form-label">
+        Nombre completo <abbr title="obligatorio" aria-hidden="true">*</abbr>
+      </label>
+      <input type="text"
+             id="fullName"
+             name="fullName"
+             class="form-control"
+             autocomplete="name"
+             required
+             aria-required="true"
+             aria-describedby="fullName-error"
+             placeholder="Ej. María García López"
+             maxlength="100" />
+      <span id="fullName-error" class="form-error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <!-- Grupo: Correo electrónico -->
+    <div class="form-group">
+      <label for="email" class="form-label">
+        Correo electrónico <abbr title="obligatorio" aria-hidden="true">*</abbr>
+      </label>
+      <input type="email"
+             id="email"
+             name="email"
+             class="form-control"
+             autocomplete="email"
+             required
+             aria-required="true"
+             aria-describedby="email-hint email-error"
+             placeholder="nombre@dominio.com" />
+      <span id="email-hint" class="form-hint">Formato: nombre@dominio.com</span>
+      <span id="email-error" class="form-error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <!-- Grupo: Mensaje -->
+    <div class="form-group">
+      <label for="message" class="form-label">
+        Mensaje <abbr title="obligatorio" aria-hidden="true">*</abbr>
+      </label>
+      <textarea id="message"
+                name="message"
+                class="form-control"
+                rows="5"
+                required
+                aria-required="true"
+                aria-describedby="message-count message-error"
+                maxlength="500"
+                placeholder="Escribe tu mensaje aquí..."></textarea>
+      <span id="message-count" class="form-hint" aria-live="polite">0/500 caracteres</span>
+      <span id="message-error" class="form-error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <!-- Token CSRF (reemplazar con implementación del servidor) -->
+    <input type="hidden" name="__RequestVerificationToken" value="" />
+
+    <!-- Botón de envío -->
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" aria-describedby="submit-status">
+        Enviar mensaje
+      </button>
+      <span id="submit-status" role="status" aria-live="polite" class="visually-hidden"></span>
+    </div>
+  </form>
+</section>
+$end$]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>
