@@ -1,0 +1,25 @@
+Con las 8 imágenes tengo el panorama completo. Un hallazgo importante que debo señalarte antes de construir: estas capturas no son una vista de solo lectura para el empleado — son el espacio de trabajo del analista que dictamina el trámite (switches "Procedente", campo "Autorizado" editable, modal ICD/CPT, botón "Rechazar trámite", "Siguiente"). Como tu propio listado de secciones incluye explícitamente "Acciones disponibles", construyo fiel a la evidencia real (workspace accionable), no una vista pasiva.
+También detecté dos violaciones reales de la regla de color semántico ya vigente en el sistema legado, que corrijo con justificación: (1) el botón "Rechazar trámite" es verde en la referencia — el verde está reservado exclusivamente a confirmación de la acción propia del usuario, nunca a un rechazo; (2) el badge "ICD/CPT" también es verde para abrir un modal de edición, mismo problema. Ambos pasan a nuestra paleta correcta (destructivo/primario).
+Construyo los tres archivos, reutilizando al máximo lo ya existente (patrón .form-section, .doc-block, .doc-file-row de Solicitud, y el modal de Notas del Tablero).Se crearon 2 archivosSe crearon 2 archivosAhora la vista principal:Se ejecutaron 2 comandos, creó un archivo, archivo leídoSe ejecutaron 2 comandos, creó un archivo, archivo leído1. Breve análisis
+Basado en las 8 imágenes Detalle_*: confirmé que es el espacio de trabajo del analista de Dictamen, no una vista pasiva — trae switches "Procedente" por partida, campo "Autorizado" editable, códigos ICD/CPT, y acciones "Rechazar trámite"/"Siguiente". Mantuve exactamente esa naturaleza accionable (tu propia lista de secciones ya pedía "Acciones disponibles").
+Mejoras aplicadas, todas justificadas por reglas ya vigentes en nuestro Design System, no por gusto:
+
+Corregí 2 usos de verde fuera de su significado reservado: "Rechazar trámite" y el badge "ICD/CPT" eran verdes en el sistema legado (verde = confirmación de acción propia del usuario, nunca rechazo ni apertura de modal) → pasé a rojo-destructivo y azul-secundario respectivamente.
+Convertí el modal bloqueante "Para proceder con la autorización…" en la Zona de mensajes de página (alerta inline) — mismo criterio que ya aplicamos en Solicitud, evita interrumpir al analista con un OK innecesario.
+Añadí un timeline compacto de estaciones (Recepción → Dictamen administrativo → Autorización de pago → Pago autorizado): la referencia solo mostraba 2 etiquetas sueltas; lo expandí a un componente real de "Historial del proceso" (que tu encargo pedía explícitamente) reutilizando el mismo vocabulario de estaciones que ya usé en el Tablero.
+Reutilicé sin cambios: el patrón .form-section (secciones azules colapsables), .doc-block (Factura/Informe médico), y literalmente el mismo .doc-file-row/.doc-file-add de Evidencias que construí para Solicitud — cero CSS nuevo para eso.
+
+2. Vista Razor
+Entregada arriba: Views/Reembolsos/Detalle.cshtml — solo el contenido de pantalla, sin Layout/Header/Sidebar/Footer.
+3. Recursos adicionales
+ArchivoUbicaciónContienedetalle-solicitud.csswwwroot/css/Solo lo que no existía: timeline de estaciones, tabla de partidas (.claim-table), resumen financiero, botón ICDdetalle-solicitud.jswwwroot/js/Modal ICD/CPT, modal Histórico ICD, switch "Procedente"
+Reutilización directa, sin duplicar código: reembolso-solicitud.js se referencia también desde esta vista — sus funciones (initDocBlocks, doc-file-add) ya cubren el acordeón de Factura/Informe médico y las filas de Evidencias; cada función verifica que su elemento exista antes de actuar, así que es seguro cargarla en ambas pantallas sin efectos colaterales.
+4. Integración
+
+Copia Detalle.cshtml a Views/Reembolsos/Detalle.cshtml (misma carpeta que Solicitud.cshtml).
+Copia los dos archivos nuevos a wwwroot/css/ y wwwroot/js/.
+Agrega una acción Detalle(string folio) en ReembolsosController que devuelva View() — nuestro Sidebar aún no enlaza aquí directamente; el punto de entrada natural es el ícono "Ver detalle" (👁) de cada fila del Tablero, que hoy no tiene href real. Si quieres, en la siguiente pantalla lo conecto.
+Visualízala en /Reembolsos/Detalle.
+
+Observación de nomenclatura (sin acción, solo registro): reembolso-solicitud.js ya no es exclusivo de una sola vista — en una fase de limpieza futura convendría renombrarlo reembolsos-shared.js. No lo renombro ahora para no romper la referencia ya integrada en Solicitud.cshtml.
+Quedo a la espera de tu aprobación antes de continuar con Retroceder Trámite.
