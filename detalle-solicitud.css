@@ -1,0 +1,222 @@
+/* ============================================================================
+   detalle-solicitud.css — Estilos exclusivos de Views/Reembolsos/Detalle.
+   Reutiliza deliberadamente las clases ya construidas para Solicitud
+   (.form-section, .form-section-header, .doc-block, .doc-file-row, .field,
+   .field-label, .field-readonly-value, .btn-primary-vm, .btn-text-vm, todos
+   los tokens --vm-*). Este archivo SOLO añade lo que esa pantalla no tenía:
+   timeline de trámite, tabla de partidas de reclamación, resumen financiero
+   y botón de diagnóstico.
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   Fila combinada: Datos del asegurado titular + aside de Notas del trámite.
+   Es la única fila de la vista que comparte ancho; el resto de secciones
+   (Datos del paciente, Reclamación, Evidencias, Comentarios, Acciones)
+   conserva el ancho completo de .solicitud-view sin cambios.
+   ---------------------------------------------------------------------------- */
+.asegurado-notes-row { display: flex; align-items: flex-start; gap: var(--vm-space-6); }
+.asegurado-notes-row .form-section { flex: 1 1 auto; min-width: 0; }
+
+/* ----------------------------------------------------------------------------
+   Encabezado del folio + timeline de estaciones del trámite
+   ---------------------------------------------------------------------------- */
+.folio-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--vm-space-4); }
+.folio-head-main { display: flex; flex-direction: column; gap: var(--vm-space-2); min-width: 280px; }
+.folio-eyebrow { font-size: var(--vm-text-small); color: var(--vm-neutral-500); font-weight: 500; }
+.folio-title { font-size: var(--vm-text-display); font-weight: 700; color: var(--vm-neutral-900); margin: 0; }
+.folio-head-actions { display: flex; align-items: center; gap: var(--vm-space-3); }
+
+.folio-notes-btn {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: var(--vm-control-h); height: var(--vm-control-h); border-radius: var(--vm-radius);
+    border: 1px solid var(--vm-neutral-300); background: var(--vm-white); color: var(--vm-neutral-700); cursor: pointer;
+}
+.folio-notes-btn:hover { background: var(--vm-neutral-100); }
+.folio-notes-badge {
+    position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: var(--vm-radius-pill);
+    background: var(--vm-primary-600); color: #fff; font-size: 11px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+
+.stage-timeline { display: flex; align-items: center; gap: 0; margin-top: var(--vm-space-2); overflow-x: auto; padding-bottom: 4px; }
+.stage-step { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.stage-dot {
+    display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--vm-neutral-100); color: var(--vm-neutral-500); border: 2px solid var(--vm-neutral-200); flex-shrink: 0;
+}
+.stage-dot .lucide { width: 14px; height: 14px; }
+.stage-label { font-size: var(--vm-text-small); color: var(--vm-neutral-500); white-space: nowrap; }
+.stage-connector { width: 40px; height: 2px; background: var(--vm-neutral-200); flex-shrink: 0; }
+
+.stage-step.is-done .stage-dot { background: var(--vm-success-100); color: var(--vm-success-600); border-color: var(--vm-success-100); }
+.stage-step.is-done .stage-label { color: var(--vm-neutral-700); }
+.stage-step.is-done + .stage-connector { background: var(--vm-success-100); }
+
+.stage-step.is-current .stage-dot { background: var(--vm-primary-600); color: #fff; border-color: var(--vm-primary-600); }
+.stage-step.is-current .stage-label { color: var(--vm-primary-700); font-weight: 700; }
+
+/* ----------------------------------------------------------------------------
+   Barra de herramientas de la sección Reclamación (ICD / Histórico ICD / PDF)
+   ---------------------------------------------------------------------------- */
+.section-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--vm-space-4); }
+.section-toolbar-actions { display: flex; gap: var(--vm-space-3); }
+.pdf-link {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    color: var(--vm-neutral-900); font-size: var(--vm-text-body-strong); font-weight: 600;
+}
+.pdf-link .lucide { width: 22px; height: 22px; color: var(--vm-error-600); }
+.pdf-link:hover { text-decoration: underline; }
+
+.category-chip {
+    display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+    background: var(--vm-primary-100); color: var(--vm-primary-700); font-weight: 600;
+    font-size: var(--vm-text-small); padding: 8px 16px; border-radius: var(--vm-radius);
+}
+.category-chip .lucide { width: 16px; height: 16px; }
+
+/* ----------------------------------------------------------------------------
+   Tabla de partidas dentro de un doc-block (Factura / Informe médico)
+   ---------------------------------------------------------------------------- */
+.claim-table-scroll { overflow-x: auto; }
+.claim-table { width: 100%; border-collapse: collapse; font-size: var(--vm-text-small); }
+.claim-table thead th {
+    background: var(--vm-header-bg); color: #fff; font-weight: 600; text-align: left;
+    padding: 10px 12px; white-space: nowrap;
+}
+.claim-table tbody td { padding: 12px; border-bottom: 1px solid var(--vm-neutral-100); vertical-align: middle; }
+.claim-table tbody tr:last-child td { border-bottom: 0; }
+.claim-table .ta-right { text-align: right; font-variant-numeric: tabular-nums; }
+.claim-table .ta-center { text-align: center; }
+
+.icd-btn {
+    display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--vm-primary-600);
+    background: var(--vm-white); color: var(--vm-primary-600); font-size: var(--vm-text-micro); font-weight: 700;
+    padding: 6px 12px; border-radius: var(--vm-radius-pill); cursor: pointer; white-space: nowrap;
+}
+.icd-btn:hover { background: var(--vm-primary-100); }
+.icd-btn .lucide { width: 14px; height: 14px; }
+
+.autorizado-input { width: 130px; text-align: right; }
+
+.thumb-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+    border-radius: var(--vm-radius); border: 1px solid var(--vm-neutral-300); background: var(--vm-white);
+    color: var(--vm-primary-600); cursor: pointer;
+}
+.thumb-btn:hover { background: var(--vm-primary-100); }
+.thumb-btn .lucide { width: 18px; height: 18px; }
+
+/* ----------------------------------------------------------------------------
+   Resumen financiero (Monto disponible cobertura / póliza)
+   ---------------------------------------------------------------------------- */
+.summary-figures { display: flex; flex-wrap: wrap; gap: var(--vm-space-8); padding-top: var(--vm-space-2); }
+.summary-figure { display: flex; flex-direction: column; gap: 2px; }
+.summary-figure-label { font-size: var(--vm-text-small); color: var(--vm-neutral-500); }
+.summary-figure-value { font-size: var(--vm-text-h2); font-weight: 700; color: var(--vm-primary-700); }
+
+/* ----------------------------------------------------------------------------
+   Modal ICD / CPT
+   ---------------------------------------------------------------------------- */
+.icd-modal-field + .icd-modal-field { margin-top: var(--vm-space-4); }
+
+/* ----------------------------------------------------------------------------
+   Aside · Notas del trámite (antes modal) — panel persistente junto a Datos
+   del asegurado titular, máx. 1/4 del ancho total de la fila.
+   .note-add*/.note-timeline/.note-item se reutilizan tal cual.
+   ---------------------------------------------------------------------------- */
+.solicitud-notes-panel {
+    flex: 0 0 25%; max-width: 25%; min-width: 260px; align-self: flex-start;
+    background: var(--vm-white); border: 1px solid var(--vm-neutral-200); border-radius: var(--vm-radius);
+    padding: var(--vm-space-5); display: flex; flex-direction: column; gap: var(--vm-space-4);
+}
+.notes-panel-header { display: flex; align-items: center; gap: var(--vm-space-2); }
+.notes-panel-header .lucide { width: 20px; height: 20px; color: var(--vm-primary-600); flex-shrink: 0; }
+.notes-panel-title { flex: 1 1 auto; font-size: var(--vm-text-body-strong); font-weight: 700; color: var(--vm-neutral-900); margin: 0; }
+.notes-panel-badge {
+    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px;
+    border-radius: var(--vm-radius-pill); background: var(--vm-primary-600); color: #fff; font-size: 12px; font-weight: 700; padding: 0 6px;
+}
+.solicitud-notes-panel .note-timeline { max-height: 260px; overflow-y: auto; padding-right: 4px; }
+
+.note-add { display: flex; flex-direction: column; gap: var(--vm-space-2); margin-bottom: var(--vm-space-5); }
+.note-add-row { display: flex; align-items: center; gap: var(--vm-space-3); }
+.note-add-input { flex: 1 1 auto; }
+.note-add-btn {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 36px; height: 36px; border-radius: 50%; border: 0;
+    background: var(--vm-primary-600); color: #fff; cursor: pointer;
+}
+.note-add-btn:hover { background: #0069b0; }
+.note-add-btn .lucide { width: 18px; height: 18px; }
+
+/* ----------------------------------------------------------------------------
+   Acciones disponibles (pie de la vista)
+   ---------------------------------------------------------------------------- */
+.detalle-actions {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--vm-space-4);
+    padding-top: var(--vm-space-4); border-top: 1px solid var(--vm-neutral-200);
+}
+.detalle-actions-left { display: flex; align-items: center; gap: var(--vm-space-4); }
+.siniestro-tag { display: flex; flex-direction: column; gap: 2px; }
+.siniestro-tag-label { font-size: var(--vm-text-small); font-weight: 600; color: var(--vm-neutral-900); }
+.siniestro-tag-value { font-size: var(--vm-text-small); color: var(--vm-neutral-500); }
+.detalle-actions-right { display: flex; align-items: center; gap: var(--vm-space-3); }
+
+.btn-danger-outline-vm {
+    display: inline-flex; align-items: center; gap: 8px; min-height: var(--vm-control-h);
+    padding: 10px 20px; border-radius: var(--vm-radius); font-size: var(--vm-text-body); font-weight: 600;
+    background: transparent; border: 1px solid var(--vm-error-600); color: var(--vm-error-600); cursor: pointer;
+}
+.btn-danger-outline-vm:hover { background: var(--vm-error-100); }
+
+@media (max-width: 1199.98px) {
+    .asegurado-notes-row { flex-direction: column; }
+    .solicitud-notes-panel { width: 100%; max-width: none; flex-basis: auto; }
+}
+
+@media (max-width: 767.98px) {
+    .folio-head { flex-direction: column; }
+    .summary-figures { gap: var(--vm-space-6); }
+    .detalle-actions { flex-direction: column-reverse; align-items: stretch; }
+    .detalle-actions-left, .detalle-actions-right { justify-content: space-between; }
+}
+
+/* Esto agregué yo */
+/* Zona de mensajes de página */
+.alert-page {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--vm-space-3);
+    border: 0;
+    border-radius: var(--vm-radius);
+    padding: var(--vm-space-4);
+    margin-bottom: var(--vm-space-6);
+}
+
+.alert-page--warning {
+    background: var(--vm-warning-100);
+    color: var(--vm-neutral-900);
+}
+
+.alert-page-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--vm-warning-600);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.alert-page-body {
+    font-size: var(--vm-text-body);
+}
+
+.alert-page-link {
+    margin-left: var(--vm-space-2);
+    font-weight: 600;
+    color: var(--vm-primary-600);
+    text-decoration: none;
+}
+
+    .alert-page-link:hover {
+        text-decoration: underline;
+    }
