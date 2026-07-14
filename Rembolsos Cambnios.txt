@@ -1,0 +1,138 @@
+Aquí están los 6 bloques exactos a copiar (viejo → nuevo), en orden de aparición en cada archivo.
+Views/Home/ReembolsoSolicitud.cshtml
+Bloque 1 — Sección 1, campos Estado/Municipio
+Buscar:
+html                        <div class="field">
+                            <label class="field-label" for="selectEstado">Estado</label>
+                            <select id="selectEstado" name="AseguradoTitular.Estado" class="form-select">
+                                <option value="">-- Seleccionar Estado --</option>
+                                <option>Puebla</option>
+                                <option>Ciudad de México</option>
+                                <option>Jalisco</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="selectMunicipio">Municipio</label>
+                            <select id="selectMunicipio" name="AseguradoTitular.Municipio" class="form-select" disabled>
+                                <option value="">-- Seleccionar Estado primero --</option>
+                            </select>
+                        </div>
+Reemplazar por:
+html                        <div class="field">
+                            <label class="field-label" for="inputEstado">Estado</label>
+                            <input type="text" id="inputEstado" name="AseguradoTitular.Estado" class="form-control" placeholder="Se completa con el código postal" disabled>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="inputMunicipio">Municipio</label>
+                            <input type="text" id="inputMunicipio" name="AseguradoTitular.Municipio" class="form-control" placeholder="Se completa con el código postal" disabled>
+                        </div>
+wwwroot/js/reembolso-solicitud.js
+Bloque 2 — tabla demo (reemplaza MUNICIPIOS_POR_ESTADO)
+Buscar:
+js    var MUNICIPIOS_POR_ESTADO = {
+        "Puebla": ["Chilchotla", "Puebla de Zaragoza", "Tehuacán"],
+        "Ciudad de México": ["Miguel Hidalgo", "Coyoacán", "Benito Juárez"],
+        "Jalisco": ["Guadalajara", "Zapopan", "Tlaquepaque"]
+    };
+Reemplazar por:
+js    // Demo: Estado/Municipio ya no se capturan manualmente (dropdowns) — se
+    // autocompletan como inputs deshabilitados a partir del Código Postal.
+    // Reemplazar por una llamada real de catálogo (SEPOMEX u otro servicio).
+    var ESTADO_MUNICIPIO_POR_CP = {
+        "75070": { estado: "Puebla", municipio: "Chilchotla" },
+        "03100": { estado: "Ciudad de México", municipio: "Benito Juárez" },
+        "44100": { estado: "Jalisco", municipio: "Guadalajara" }
+    };
+Bloque 3 — llamada dentro de DOMContentLoaded
+Buscar:
+js        initDerechohabienteModal();
+        initEstadoMunicipio();
+        initBeneficiarioSelect();
+Reemplazar por:
+js        initDerechohabienteModal();
+        initCodigoPostalLookup();
+        initBeneficiarioSelect();
+Bloque 4 — función completa (reemplaza initEstadoMunicipio)
+Buscar:
+js    // ---- 2. Cascada Estado -> Municipio (demo) ----
+    function initEstadoMunicipio() {
+        var estado = document.getElementById("selectEstado");
+        var municipio = document.getElementById("selectMunicipio");
+        if (!estado || !municipio) return;
+
+        estado.addEventListener("change", function () {
+            var lista = MUNICIPIOS_POR_ESTADO[estado.value] || [];
+            municipio.innerHTML = "";
+            if (lista.length === 0) {
+                municipio.innerHTML = '<option value="">-- Seleccionar Estado primero --</option>';
+                municipio.disabled = true;
+                return;
+            }
+            municipio.disabled = false;
+            municipio.innerHTML = '<option value="">-- Seleccionar Municipio --</option>' +
+                lista.map(function (m) { return "<option>" + m + "</option>"; }).join("");
+        });
+    }
+Reemplazar por:
+js    // ---- 2. Código Postal -> Estado/Municipio (demo, inputs deshabilitados) ----
+    function initCodigoPostalLookup() {
+        var cp = document.getElementById("inputCP");
+        var estado = document.getElementById("inputEstado");
+        var municipio = document.getElementById("inputMunicipio");
+        if (!cp || !estado || !municipio) return;
+
+        function sync() {
+            var valor = (cp.value || "").trim();
+            var datos = ESTADO_MUNICIPIO_POR_CP[valor];
+            estado.value = datos ? datos.estado : "";
+            municipio.value = datos ? datos.municipio : "";
+            // Los inputs quedan deshabilitados (no editables ni disparan sus
+            // propios eventos): se notifica el gate de la Sección 1 aquí mismo.
+            evaluarGateSeccion2();
+        }
+
+        cp.addEventListener("input", sync);
+        cp.addEventListener("change", sync);
+    }
+Bloque 5 — lista centralizada del gate (Sección 10)
+Buscar:
+js    var SECCION1_CAMPOS_REQUERIDOS = [
+        "inputCorreo",
+        "inputTelefono",
+        "inputCP",
+        "selectEstado",
+        "selectMunicipio",
+        "inputFechaPadecimiento"
+    ];
+Reemplazar por:
+js    var SECCION1_CAMPOS_REQUERIDOS = [
+        "inputCorreo",
+        "inputTelefono",
+        "inputCP",
+        "inputEstado",
+        "inputMunicipio",
+        "inputFechaPadecimiento"
+    ];
+
+    // Campos de SECCION1_CAMPOS_REQUERIDOS que son de solo lectura (autocompletados,
+    // no capturados por el usuario) — no necesitan listener propio de "input"/"change"
+    // en initProgressiveSections(), ya que su cambio se notifica desde quien los llena
+    // (ver initCodigoPostalLookup, que llama a evaluarGateSeccion2() directamente).
+    var SECCION1_CAMPOS_AUTOCOMPLETADOS = ["inputEstado", "inputMunicipio"];
+Bloque 6 — loop de listeners en initProgressiveSections()
+Buscar:
+js        SECCION1_CAMPOS_REQUERIDOS.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener("input", evaluarGateSeccion2);
+            el.addEventListener("change", evaluarGateSeccion2);
+        });
+Reemplazar por:
+js        SECCION1_CAMPOS_REQUERIDOS.forEach(function (id) {
+            if (SECCION1_CAMPOS_AUTOCOMPLETADOS.indexOf(id) !== -1) return;
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener("input", evaluarGateSeccion2);
+            el.addEventListener("change", evaluarGateSeccion2);
+        });
+Con esos 6 bloques queda completo el cambio.
