@@ -1,0 +1,515 @@
+﻿@{
+    ViewData["Title"] = "Solicitud de reembolso";
+
+    // ------------------------------------------------------------------
+    // Datos de vista (hardcoded para esta fase de alta fidelidad).
+    // Nombrados pensando en el futuro ViewModel (SolicitudReembolsoViewModel):
+    //   Categorias -> Reclamacion.Categorias (List<CategoriaReclamacionVM>)
+    //   cada CategoriaReclamacionVM: Key, Nombre, Icono, TieneMotivo, Documentos[]
+    // No contiene lógica de negocio: es solo la estructura que la vista recorre
+    // para no repetir el mismo bloque de marcado 8 veces.
+    // ------------------------------------------------------------------
+    var categorias = new[]
+    {
+        new {
+            Key = "consultas", Nombre = "Consultas", Icono = "stethoscope",
+            TieneMotivo = true, TipoFactura = "estandar",
+            Documentos = new[] {
+                new { Nombre = "Receta", Requerido = false },
+                new { Nombre = "Otro", Requerido = false },
+            }
+        },
+        new {
+            Key = "medicamentos", Nombre = "Medicamentos", Icono = "pill",
+            TieneMotivo = false, TipoFactura = "estandar",
+            Documentos = new[] {
+                new { Nombre = "Receta", Requerido = false },
+                new { Nombre = "Otro", Requerido = false },
+            }
+        },
+        new {
+            Key = "vacunas", Nombre = "Vacunas", Icono = "syringe",
+            TieneMotivo = false, TipoFactura = "estandar",
+            Documentos = new[] {
+                new { Nombre = "Cartilla Nacional de Vacunación", Requerido = true },
+                new { Nombre = "Otro", Requerido = false },
+            }
+        },
+        new {
+            Key = "laboratorio", Nombre = "Laboratorio y Gabinete", Icono = "flask-conical",
+            TieneMotivo = false, TipoFactura = "estandar",
+            Documentos = new[] {
+                new { Nombre = "Orden Médica", Requerido = true },
+                new { Nombre = "Estado de Cuenta", Requerido = false },
+                new { Nombre = "Otro", Requerido = false },
+            }
+        },
+        new {
+            Key = "cuidados", Nombre = "Cuidados Preventivos (Enfermería, Terapias)", Icono = "heart-pulse",
+            TieneMotivo = false, TipoFactura = "estandar",
+            Documentos = new[] {
+                new { Nombre = "Informe Médico", Requerido = false },
+                new { Nombre = "Bitácora", Requerido = false },
+                new { Nombre = "Otro", Requerido = false },
+            }
+        },
+        new {
+            Key = "audicion", Nombre = "Exámenes de Audición", Icono = "ear",
+            TieneMotivo = false, TipoFactura = "estandar",
+            Documentos = new[] {
+                new { Nombre = "Orden Médica", Requerido = true },
+                new { Nombre = "Estudios", Requerido = true },
+                new { Nombre = "Otro", Requerido = false },
+            }
+        },
+        new {
+            Key = "lentes", Nombre = "Lentes", Icono = "glasses",
+            TieneMotivo = false, TipoFactura = "estandar",
+            Documentos = new[] {
+                new { Nombre = "Orden Médica", Requerido = true },
+                new { Nombre = "Otro", Requerido = false },
+            }
+        },
+        new {
+            Key = "extranjero", Nombre = "Gastos en el Extranjero", Icono = "plane",
+            TieneMotivo = false, TipoFactura = "multimoneda",
+            Documentos = new[] {
+                new { Nombre = "Informe Médico", Requerido = true },
+                new { Nombre = "Otro", Requerido = false },
+            }
+        },
+    };
+
+    var motivosConsulta = new[] { "Dolor de cabeza", "Chequeo general", "Dolor abdominal", "Control de enfermedad crónica", "Otro" };
+}
+
+@section PageMessage {
+    <div class="alert-page alert-page--info" role="alert">
+        <i data-lucide="info" class="alert-page-icon" aria-hidden="true"></i>
+        <div class="alert-page-body">
+            <strong>Antes de solicitar tu reembolso</strong>, asegúrate de haber recibido por parte de tu proveedor médico los archivos XML y PDF, y de tenerlos guardados e identificados en tu equipo.
+            <a href="#" class="alert-page-link">Consulta los documentos necesarios</a>
+        </div>
+    </div>
+}
+
+<div class="solicitud-view">
+
+    <div class="page-head">
+        <h1 class="page-display">Solicitud de reembolso</h1>
+        <p class="page-lead">Completa los datos del asegurado, del paciente y de la reclamación para iniciar tu trámite.</p>
+    </div>
+
+    <form id="formSolicitudReembolso" novalidate>
+
+        @* =================================================================
+           SECCIÓN 1 · Datos del asegurado titular
+           ================================================================= *@
+        <section class="form-section" aria-label="Datos del asegurado titular">
+            <button type="button" class="form-section-header" aria-expanded="true" aria-controls="seccionAsegurado" data-bs-toggle="collapse" data-bs-target="#seccionAsegurado">
+                <span class="form-section-number">1</span>
+                <span class="form-section-title">Datos del asegurado titular</span>
+                <span class="form-section-summary" id="resumenAsegurado">Aún no se ha buscado un derechohabiente</span>
+                <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
+            </button>
+
+            <div id="seccionAsegurado" class="collapse show">
+                <div class="form-section-body">
+                    <div class="field-grid">
+                        <div class="field">
+                            <label class="field-label" for="campoNumeroEmpleado">Número de empleado</label>
+                            <span class="field-readonly-value" id="campoNumeroEmpleado">—</span>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="campoNombreTitular">Nombre</label>
+                            <span class="field-readonly-value" id="campoNombreTitular">—</span>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="inputCorreo">Correo electrónico</label>
+                            <input type="email" id="inputCorreo" name="AseguradoTitular.CorreoElectronico" class="form-control" placeholder="nombre@correo.com">
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="inputTelefono">Número telefónico</label>
+                            <input type="tel" id="inputTelefono" name="AseguradoTitular.Telefono" class="form-control" placeholder="10 dígitos">
+                        </div>
+                    </div>
+
+                    <div class="field-grid">
+                        <div class="field">
+                            <label class="field-label" for="inputCP">
+                                Código postal del proveedor médico
+                                <i data-lucide="circle-help" class="field-help" tabindex="0" role="button"
+                                   data-bs-toggle="tooltip" data-bs-placement="top"
+                                   title="Código postal del consultorio, clínica u hospital donde recibiste el servicio" aria-hidden="true"></i>
+                            </label>
+                            <input type="text" id="inputCP" name="AseguradoTitular.CodigoPostal" class="form-control" placeholder="75070" inputmode="numeric" maxlength="5">
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="selectEstado">Estado</label>
+                            <select id="selectEstado" name="AseguradoTitular.Estado" class="form-select">
+                                <option value="">-- Seleccionar Estado --</option>
+                                <option>Puebla</option>
+                                <option>Ciudad de México</option>
+                                <option>Jalisco</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="selectMunicipio">Municipio</label>
+                            <select id="selectMunicipio" name="AseguradoTitular.Municipio" class="form-select" disabled>
+                                <option value="">-- Seleccionar Estado primero --</option>
+                            </select>
+                        </div>
+                        <partial name="Partials/_DatePicker" model='new DatePickerViewModel {
+                            Id = "inputFechaPadecimiento",
+                            Name = "AseguradoTitular.FechaInicioPadecimiento",
+                            Label = "Fecha inicio padecimiento"
+                        }' />
+                    </div>
+
+                    <div class="field-grid">
+                        <div class="field">
+                            <span class="field-label">Fecha inicio vigencia</span>
+                            <span class="field-readonly-value" id="campoFechaInicioVigencia">—</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">Fecha fin vigencia</span>
+                            <span class="field-readonly-value" id="campoFechaFinVigencia">—</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">Miembro desde</span>
+                            <span class="field-readonly-value" id="campoMiembroDesde">—</span>
+                        </div>
+                        <div class="field field-actions-row" style="align-self:end">
+                            <button type="button" class="doc-gen-btn doc-gen-btn--secondary" title="Buscar derechohabiente" aria-label="Buscar derechohabiente" data-bs-toggle="modal" data-bs-target="#modalDerechohabiente">
+                                <i data-lucide="search" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="doc-gen-btn doc-gen-btn--danger icon-btn" title="Limpiar selección" aria-label="Limpiar selección del asegurado">
+                                <i data-lucide="x" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @* =================================================================
+           SECCIÓN 2 · Datos del paciente o derechohabiente
+           ================================================================= *@
+        <section class="form-section" aria-label="Datos del paciente o derechohabiente">
+            <button type="button" class="form-section-header" aria-expanded="true" aria-controls="seccionPaciente" data-bs-toggle="collapse" data-bs-target="#seccionPaciente">
+                <span class="form-section-number">2</span>
+                <span class="form-section-title">Datos del paciente o derechohabiente</span>
+                <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
+            </button>
+
+            <div id="seccionPaciente" class="collapse show">
+                <div class="form-section-body">
+                    <div class="field-grid">
+                        <div class="field">
+                            <label class="field-label" for="selectBeneficiario">Nombre del paciente</label>
+                            <select id="selectBeneficiario" name="Paciente.BeneficiarioId" class="form-select" disabled>
+                                <option value="">-- Busca primero al asegurado titular --</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">Parentesco</span>
+                            <span class="field-readonly-value" id="campoParentesco">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @* =================================================================
+           SECCIÓN 3 · Datos de la reclamación
+           ================================================================= *@
+        <section class="form-section" aria-label="Datos de la reclamación">
+            <button type="button" class="form-section-header" aria-expanded="true" aria-controls="seccionReclamacion" data-bs-toggle="collapse" data-bs-target="#seccionReclamacion">
+                <span class="form-section-number">3</span>
+                <span class="form-section-title">Datos de la reclamación</span>
+                <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
+            </button>
+
+            <div id="seccionReclamacion" class="collapse show">
+                <div class="form-section-body">
+
+                    <div class="field" style="max-width:520px">
+                        <label class="field-label" for="inputFormatoInstruccion">Formato de instrucción de reembolso</label>
+                        <div class="doc-file-row">
+                            <input type="text" id="inputFormatoInstruccion" class="form-control doc-file-input" readonly placeholder="Ningún archivo seleccionado">
+                            <button type="button" class="doc-gen-btn doc-gen-btn--secondary">
+                                <i data-lucide="upload" aria-hidden="true"></i> Cargar
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr class="my-0" style="border-color:var(--vm-neutral-200)">
+
+                    <div>
+                        <h2 style="font-size:var(--vm-text-h2);font-weight:600;color:var(--vm-neutral-900);margin:0 0 var(--vm-space-4)">
+                            Selecciona qué servicio quieres reclamar
+                        </h2>
+
+                        <div class="category-layout">
+                            <div class="category-nav" role="tablist" aria-label="Categorías de reclamación" data-category-nav>
+                                @foreach (var (cat, index) in categorias.Select((c, i) => (c, i)))
+                                {
+                                    <button type="button"
+                                            class="category-nav-btn"
+                                            role="tab"
+                                            id="tab-@cat.Key"
+                                            aria-controls="panel-@cat.Key"
+                                            aria-selected="@(index == 0 ? "true" : "false")">
+                                        <i data-lucide="@cat.Icono" aria-hidden="true"></i>
+                                        <span>@cat.Nombre</span>
+                                    </button>
+                                }
+                            </div>
+
+                            <div class="category-panels">
+                                @foreach (var (cat, index) in categorias.Select((c, i) => (c, i)))
+                                {
+                                    var solicitarId = "solicitar-" + cat.Key;
+                                    var dataId = "data-" + cat.Key;
+
+                                    <div class="category-panel @(index == 0 ? "is-active" : "")" id="panel-@cat.Key" role="tabpanel" aria-labelledby="tab-@cat.Key">
+
+                                        <div class="solicitar-row">
+                                            <label class="solicitar-check">
+                                                <input type="checkbox" class="form-check-input" id="@solicitarId"
+                                                       name="Reclamacion.Categorias[@index].Solicitado"
+                                                       data-solicitar-check="@dataId" @(index == 0 ? "checked" : "")>
+                                                Solicitar
+                                            </label>
+                                            <i data-lucide="circle-help" class="field-help" tabindex="0" role="button"
+                                               data-bs-toggle="tooltip" data-bs-placement="right"
+                                               title="Marca esta opción para reclamar gastos de @cat.Nombre.ToLowerInvariant() en esta solicitud" aria-hidden="true"></i>
+                                        </div>
+
+                                        <p class="solicitar-hint" data-solicitar-hint="@dataId" hidden>
+                                            <i data-lucide="info" aria-hidden="true"></i>
+                                            Marca la casilla "Solicitar" para cargar la documentación de @cat.Nombre.ToLowerInvariant().
+                                        </p>
+
+                                        <div class="category-data" id="@dataId">
+
+                                            @if (cat.TieneMotivo)
+                                            {
+                                                <div class="field" style="max-width:360px">
+                                                    <label class="field-label" for="motivo-@cat.Key">Motivo consulta</label>
+                                                    <select id="motivo-@cat.Key" name="Reclamacion.Categorias[@index].Motivo" class="form-select">
+                                                        @foreach (var motivo in motivosConsulta)
+                                                        {
+                                                            <option selected="@(motivo == motivosConsulta[0])">@motivo</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                            }
+
+                                            @* ---- Bloque FACTURA ---- *@
+                                            @if (cat.TipoFactura == "estandar")
+                                            {
+                                                <div class="doc-block" data-factura-generator>
+                                                    <button type="button" class="doc-block-header" data-doc-toggle aria-expanded="true" aria-controls="factura-body-@cat.Key">
+                                                        <span class="doc-block-name">Factura</span>
+                                                        <span class="doc-block-total">Total: <span data-factura-total>0</span> · Monto: <span data-factura-monto>$ 0.00</span></span>
+                                                        <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                                                    </button>
+                                                    <div id="factura-body-@cat.Key" class="doc-block-body">
+                                                        <div class="doc-generator" data-factura-empty>
+                                                            <button type="button" class="doc-gen-btn doc-gen-btn--secondary" data-factura-action="pdf">
+                                                                <i data-lucide="file-text" aria-hidden="true"></i> Cargar PDF
+                                                            </button>
+                                                            <button type="button" class="doc-gen-btn doc-gen-btn--secondary" data-factura-action="xml">
+                                                                <i data-lucide="file-code" aria-hidden="true"></i> Cargar XML
+                                                            </button>
+                                                            <button type="button" class="doc-gen-btn doc-gen-btn--primary" data-factura-action="generar">
+                                                                <i data-lucide="sparkles" aria-hidden="true"></i> Generar XML
+                                                            </button>
+                                                            <button type="button" class="doc-gen-btn doc-gen-btn--danger" data-factura-action="limpiar">
+                                                                <i data-lucide="trash-2" aria-hidden="true"></i> Limpiar
+                                                            </button>
+                                                        </div>
+                                                        <div data-factura-loaded hidden>
+                                                            <div class="doc-file-row">
+                                                                <input type="text" class="form-control doc-file-input" readonly value="factura_CFDI_0421.xml">
+                                                                <button type="button" class="doc-file-remove" title="Quitar factura" aria-label="Quitar factura cargada" data-factura-action="limpiar">
+                                                                    <i data-lucide="trash-2" aria-hidden="true"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="doc-block">
+                                                    <button type="button" class="doc-block-header" data-doc-toggle aria-expanded="true" aria-controls="factura-body-@cat.Key">
+                                                        <span class="doc-block-name">Factura</span>
+                                                        <span class="doc-block-total">Total: 0 · Monto: $ 0.00</span>
+                                                        <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                                                    </button>
+                                                    <div id="factura-body-@cat.Key" class="doc-block-body">
+                                                        <span class="doc-required-banner"><i data-lucide="asterisk" aria-hidden="true"></i>Documento requerido</span>
+                                                        <div id="lineas-@cat.Key">
+                                                            <div class="factura-line">
+                                                                <div class="field">
+                                                                    <label class="field-label">Factura</label>
+                                                                    <div class="doc-file-row">
+                                                                        <input type="text" class="form-control doc-file-input" readonly placeholder="Ningún archivo">
+                                                                        <button type="button" class="doc-gen-btn doc-gen-btn--secondary" style="min-height:44px"><i data-lucide="upload" aria-hidden="true"></i></button>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="field">
+                                                                    <label class="field-label">Moneda</label>
+                                                                    <select class="form-select">
+                                                                        <option value="">-- Seleccionar Moneda --</option>
+                                                                        <option>USD - Dólar americano</option>
+                                                                        <option>EUR - Euro</option>
+                                                                        <option>MXN - Peso mexicano</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="field">
+                                                                    <label class="field-label">Fecha servicio</label>
+                                                                    <div class="date-picker-input-wrap">
+                                                                        <input type="text" class="form-control date-picker-input" placeholder="dd/mm/aaaa" autocomplete="off" data-component="date-picker">
+                                                                        <i data-lucide="calendar" class="date-picker-icon" aria-hidden="true"></i>
+                                                                    </div>
+                                                                </div>
+                                                                <button type="button" class="doc-file-remove" title="Quitar línea de factura" aria-label="Quitar línea de factura">
+                                                                    <i data-lucide="trash-2" aria-hidden="true"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="doc-file-add" data-factura-lineas-add="lineas-@cat.Key">
+                                                            <i data-lucide="plus-circle" aria-hidden="true"></i> Agregar otra factura
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            @* ---- Bloques de documentos propios de la categoría ---- *@
+                                            @foreach (var doc in cat.Documentos)
+                                            {
+                                                var docSlug = cat.Key + "-" + doc.Nombre.ToLowerInvariant().Replace(" ", "-").Replace("(", "").Replace(")", "").Replace(",", "");
+                                                <div class="doc-block">
+                                                    <button type="button" class="doc-block-header" data-doc-toggle aria-expanded="true" aria-controls="body-@docSlug">
+                                                        <span class="doc-block-name">@doc.Nombre</span>
+                                                        <span class="doc-block-total">Total: 0</span>
+                                                        <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                                                    </button>
+                                                    <div id="body-@docSlug" class="doc-block-body">
+                                                        @if (doc.Requerido)
+                                                        {
+                                                            <span class="doc-required-banner"><i data-lucide="asterisk" aria-hidden="true"></i>Documento requerido</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="doc-optional-banner"><i data-lucide="circle" aria-hidden="true"></i>Documento opcional</span>
+                                                        }
+                                                        <div id="filas-@docSlug">
+                                                            <div class="doc-file-row">
+                                                                <input type="text" class="form-control doc-file-input" readonly placeholder="@doc.Nombre (PNG, JPEG o PDF, máx. 5 MB)">
+                                                                <button type="button" class="doc-gen-btn doc-gen-btn--secondary" style="min-height:44px">
+                                                                    <i data-lucide="upload" aria-hidden="true"></i> Cargar
+                                                                </button>
+                                                                <button type="button" class="doc-file-remove" title="Quitar archivo" aria-label="Quitar archivo" style="display:none">
+                                                                    <i data-lucide="trash-2" aria-hidden="true"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="doc-file-add" data-doc-add="filas-@docSlug">
+                                                            <i data-lucide="plus-circle" aria-hidden="true"></i> Agregar otro archivo
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="textareaComentarios">Comentarios</label>
+                        <textarea id="textareaComentarios" name="Reclamacion.Comentarios" class="form-control" rows="4" placeholder="Agrega cualquier información adicional que ayude a procesar tu solicitud"></textarea>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="button" class="doc-gen-btn doc-gen-btn--danger" data-cancelar-solicitud>Cancelar</button>
+            <button type="submit" class="btn btn-success">
+                <i data-lucide="check" aria-hidden="true"></i> Registrar
+            </button>
+        </div>
+    </form>
+</div>
+
+@* =====================================================================
+   Modal · Buscar Derechohabiente (punto de partida del flujo)
+   ===================================================================== *@
+<div class="modal fade" id="modalDerechohabiente" tabindex="-1" aria-labelledby="modalDerechohabienteLabel" aria-hidden="true" data-autoshow>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalDerechohabienteLabel">Derechohabiente</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form data-buscar-form>
+                    <div class="field-grid" style="grid-template-columns: 2fr 1fr; align-items:end">
+                        <div class="field">
+                            <label class="field-label" for="inputNumeroEmpleado">Número de empleado</label>
+                            <input type="text" id="inputNumeroEmpleado" name="numeroEmpleado" class="form-control" placeholder="Ej. 38602287" value="38602287">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="search" aria-hidden="true"></i> Buscar
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-4" data-buscar-resultados hidden></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* =====================================================================
+   Modal · Confirmar cancelación
+   ===================================================================== *@
+<div class="modal fade" id="modalConfirmarCancelar" tabindex="-1" aria-labelledby="modalConfirmarCancelarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalConfirmarCancelarLabel">¿Cancelar la solicitud?</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0;color:var(--vm-neutral-900)">Perderás la información capturada en este formulario. Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-text-vm" data-bs-dismiss="modal">Seguir editando</button>
+                <button type="button" class="btn btn-outline-danger" data-confirmar-cancelar data-href="/">Sí, cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/reembolso-solicitud.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/reembolso-solicitud.js" asp-append-version="true"></script>
+    <script>
+        // Inicializa los tooltips Bootstrap de esta vista (íconos de ayuda ?).
+        document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+        new bootstrap.Tooltip(el);
+        });
+        });
+    </script>
+}
