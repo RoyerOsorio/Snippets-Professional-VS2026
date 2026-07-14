@@ -1,0 +1,91 @@
+Correcciones
+Archivo
+Views/Shared/_Layout.cshtml
+Ubicación
+Bloque de scripts al final del <body>, junto a layout.js, sidebar.js y header.js.
+Código actual
+html    <script src="~/js/layout.js" asp-append-version="true"></script>
+    <script src="~/js/sidebar.js" asp-append-version="true"></script>
+    <script src="~/js/header.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+Reemplazar por
+html    <script src="~/js/layout.js" asp-append-version="true"></script>
+    <script src="~/js/sidebar.js" asp-append-version="true"></script>
+    <script src="~/js/header.js" asp-append-version="true"></script>
+
+    <script type="module" src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+Motivo
+site.js es el único punto que importa y ejecuta initDatePicker(). Sin esta referencia, el componente Date Picker nunca se inicializa en ningún campo del sistema.
+
+Archivo
+Views/Home/ReembolsoSolicitud.cshtml
+Ubicación
+Campo "Fecha servicio", dentro de la plantilla de línea de factura (.factura-line) de la categoría "Gastos en el Extranjero".
+Código actual
+html                                                                <div class="field">
+                                                                    <label class="field-label">Fecha servicio</label>
+                                                                    <input type="text" class="form-control" placeholder="dd/mm/aaaa">
+                                                                </div>
+Reemplazar por
+html                                                                <div class="field">
+                                                                    <label class="field-label">Fecha servicio</label>
+                                                                    <div class="date-picker-input-wrap">
+                                                                        <input type="text" class="form-control date-picker-input" placeholder="dd/mm/aaaa" autocomplete="off" data-component="date-picker">
+                                                                        <i data-lucide="calendar" class="date-picker-icon" aria-hidden="true"></i>
+                                                                    </div>
+                                                                </div>
+Motivo
+El inicializador del Date Picker busca [data-component="date-picker"]. Sin este atributo y su wrapper, el campo es invisible para el componente aunque site.js ya se cargue.
+
+Archivo
+Views/Home/ReembolsoSolicitud.cshtml
+Ubicación
+Cambio 1 — Sección 2, encabezado "Datos del paciente o derechohabiente".
+Código actual
+html        <section class="form-section" aria-label="Datos del paciente o derechohabiente">
+            <button type="button" class="form-section-header" aria-expanded="true" aria-controls="seccionPaciente" data-bs-toggle="collapse" data-bs-target="#seccionPaciente">
+                <span class="form-section-number">2</span>
+                <span class="form-section-title">Datos del paciente o derechohabiente</span>
+                <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
+            </button>
+
+            <div id="seccionPaciente" class="collapse show">
+Reemplazar por
+html        <section class="form-section" id="seccionPacienteWrapper" aria-label="Datos del paciente o derechohabiente" hidden>
+            <button type="button" class="form-section-header" aria-expanded="false" aria-controls="seccionPaciente" data-bs-toggle="collapse" data-bs-target="#seccionPaciente">
+                <span class="form-section-number">2</span>
+                <span class="form-section-title">Datos del paciente o derechohabiente</span>
+                <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
+            </button>
+
+            <div id="seccionPaciente" class="collapse">
+Motivo
+revelarSeccion() en reembolso-solicitud.js busca el id="seccionPacienteWrapper" para revelar la sección; sin hidden ni ese id, la sección se renderiza visible desde el HTML antes de que el JS actúe.
+
+Archivo
+Views/Home/ReembolsoSolicitud.cshtml
+Ubicación
+Cambio 2 — Sección 3, encabezado "Datos de la reclamación".
+Código actual
+html        <section class="form-section" aria-label="Datos de la reclamación">
+            <button type="button" class="form-section-header" aria-expanded="true" aria-controls="seccionReclamacion" data-bs-toggle="collapse" data-bs-target="#seccionReclamacion">
+                <span class="form-section-number">3</span>
+                <span class="form-section-title">Datos de la reclamación</span>
+                <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
+            </button>
+
+            <div id="seccionReclamacion" class="collapse show">
+Reemplazar por
+html        <section class="form-section" id="seccionReclamacionWrapper" aria-label="Datos de la reclamación" hidden>
+            <button type="button" class="form-section-header" aria-expanded="false" aria-controls="seccionReclamacion" data-bs-toggle="collapse" data-bs-target="#seccionReclamacion">
+                <span class="form-section-number">3</span>
+                <span class="form-section-title">Datos de la reclamación</span>
+                <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
+            </button>
+
+            <div id="seccionReclamacion" class="collapse">
+Motivo
+Mismo mecanismo que el Cambio 1: revelarSeccion() busca id="seccionReclamacionWrapper"; sin hidden ni ese id, la sección también se renderiza visible desde el inicio.
