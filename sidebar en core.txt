@@ -1,0 +1,159 @@
+/* ============================================================================
+   components/sidebar.js
+   Fase: Fase 3-B.2 — Refactorización interna del JavaScript del Layout
+   (Frontend_Refactoring_and_Migration_Plan_Addendum_v1.1.md).
+
+   Responsabilidad: colapsar/expandir (desktop/tablet), drawer (móvil),
+   submenús animados a cualquier profundidad, persistencia de estado y
+   accesibilidad por teclado del Sidebar (JavaScript_Architecture_Guide_v1.0.md
+   §4 — "components/sidebar.js: Colapso/expansión, persistencia de
+   preferencia"). Traslado literal de wwwroot/js/sidebar.js legado, sin
+   reescritura de lógica (Migration Plan §5, principio 3).
+
+   Depende de: core/storage.js
+   Consumido por: site.js
+
+   Nota de diseño: la detección de breakpoint (antes VM.viewport() en el
+   legado) se mantiene como función privada de este módulo, sin extraerse a
+   core/ — hoy solo este componente la consume, y
+   JavaScript_Architecture_Guide_v1.0.md §11.1 exige un segundo consumidor
+   real antes de generalizar preventivamente.
+
+   Mecanismo: ES Modules nativos (D-07, Migration_Technical_Decisions_Register).
+   Migration Phase: Fase 3-B.2
+   Estado: Nuevo — coexiste con el legado (sidebar.js) bajo M-01. Su
+   reemplazo activa este módulo y retira únicamente la referencia <script>
+   del legado en _Layout.cshtml (el archivo permanece físicamente intacto,
+   ver diff de _Layout.cshtml de esta misma fase).
+   ============================================================================ */
+
+import { get, getJSON, set, setJSON, STORAGE_KEYS } from '../core/storage.js';
+
+const BREAKPOINT = { mobileMax: 767.98, tabletMax: 1199.98 };
+
+function viewport() {
+    const w = window.innerWidth;
+    if (w <= BREAKPOINT.mobileMax) return "mobile";
+    if (w <= BREAKPOINT.tabletMax) return "tablet";
+    return "desktop";
+}
+
+export function initSidebar() {
+    const body = document.body;
+    const sidebar = document.getElementById("app-sidebar");
+    const backdrop = document.querySelector("[data-sidebar-backdrop]");
+    const toggleButtons = Array.from(document.querySelectorAll("[data-sidebar-toggle]"));
+    const groupToggles = Array.from(document.querySelectorAll(".nav-group-toggle"));
+
+    if (!sidebar) return;
+
+    function isMobile() {
+        return viewport() === "mobile";
+    }
+
+    function setToggleAria(expanded) {
+        toggleButtons.forEach((btn) => btn.setAttribute("aria-expanded", String(expanded)));
+    }
+
+    function openDrawer() {
+        body.classList.add("sidebar-open");
+        if (backdrop) backdrop.hidden = false;
+        setToggleAria(true);
+    }
+
+    function closeDrawer() {
+        body.classList.remove("sidebar-open");
+        if (backdrop) backdrop.hidden = true;
+        setToggleAria(false);
+    }
+
+    function setCollapsed(collapsed) {
+        body.classList.toggle("sidebar-collapsed", collapsed);
+        set(STORAGE_KEYS.collapsed, collapsed ? "1" : "0");
+        setToggleAria(!collapsed);
+    }
+
+    function onToggleClick() {
+        if (isMobile()) {
+            body.classList.contains("sidebar-open") ? closeDrawer() : openDrawer();
+        } else {
+            setCollapsed(!body.classList.contains("sidebar-collapsed"));
+        }
+    }
+
+    // Define el estado base según el viewport y las preferencias guardadas.
+    function applyResponsiveState() {
+        const vp = viewport();
+        if (vp === "mobile") {
+            body.classList.remove("sidebar-collapsed");
+            closeDrawer();
+        } else if (vp === "tablet") {
+            closeDrawer();
+            body.classList.add("sidebar-collapsed"); // riel por defecto en tablet
+            setToggleAria(false);
+        } else {
+            closeDrawer();
+            const collapsed = get(STORAGE_KEYS.collapsed) === "1";
+            body.classList.toggle("sidebar-collapsed", collapsed);
+            setToggleAria(!collapsed);
+        }
+    }
+
+    // ----- Submenús multinivel -----
+
+    function persistOpenGroups() {
+        const open = groupToggles
+            .filter((t) => t.getAttribute("aria-expanded") === "true")
+            .map((t) => t.getAttribute("aria-controls"));
+        setJSON(STORAGE_KEYS.openGroups, open);
+    }
+
+    function setGroupOpen(toggle, open) {
+        const wrap = document.getElementById(toggle.getAttribute("aria-controls"));
+        const li = toggle.closest(".nav-item");
+        toggle.setAttribute("aria-expanded", String(open));
+        if (li) li.classList.toggle("is-open", open);
+        if (wrap) wrap.classList.toggle("open", open);
+    }
+
+    function onGroupToggleClick(e) {
+        // En modo riel (colapsado en desktop/tablet) no se expanden submenús inline.
+        if (body.classList.contains("sidebar-collapsed") && !isMobile()) return;
+        const toggle = e.currentTarget;
+        const willOpen = toggle.getAttribute("aria-expanded") !== "true";
+        setGroupOpen(toggle, willOpen);
+        persistOpenGroups();
+    }
+
+    // Restaura grupos abiertos: los marcados por el servidor (rama activa) + los persistidos.
+    function restoreOpenGroups() {
+        const persisted = new Set(getJSON(STORAGE_KEYS.openGroups, []));
+        groupToggles.forEach((toggle) => {
+            const id = toggle.getAttribute("aria-controls");
+            const serverOpen = toggle.getAttribute("aria-expanded") === "true";
+            setGroupOpen(toggle, serverOpen || persisted.has(id));
+        });
+    }
+
+    // ----- Cierre del drawer por backdrop / Escape -----
+
+    function onKeyDown(e) {
+        if (e.key === "Escape" && body.classList.contains("sidebar-open")) closeDrawer();
+    }
+
+    // ----- Wiring -----
+
+    toggleButtons.forEach((btn) => btn.addEventListener("click", onToggleClick));
+    groupToggles.forEach((t) => t.addEventListener("click", onGroupToggleClick));
+    if (backdrop) backdrop.addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", onKeyDown);
+
+    let resizeRaf = null;
+    window.addEventListener("resize", () => {
+        if (resizeRaf) cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(applyResponsiveState);
+    });
+
+    restoreOpenGroups();
+    applyResponsiveState();
+}
