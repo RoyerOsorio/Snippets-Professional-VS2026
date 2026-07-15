@@ -1,0 +1,581 @@
+@{
+    ViewData["Title"] = "Tablero";
+}
+
+@* ============================================================================
+   Zona de mensajes de página (Layout Maestro §7) — mensaje contextual y
+   accionable, no genérico: informa sobre 2 solicitudes con observaciones.
+   ============================================================================ *@
+@section PageMessage {
+    <div class="alert alert-page alert-page--warning alert-dismissible fade show" role="alert">
+        <i data-lucide="alert-triangle" class="alert-page-icon" aria-hidden="true"></i>
+        <div class="alert-page-body">
+            <strong>Tienes 2 solicitudes con observaciones.</strong>
+            Requieren corrección antes de continuar su trámite.
+            <a href="#tabla-solicitudes" class="alert-page-link">Ver solicitudes</a>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<div class="tablero-view">
+
+    @* ---------------------------------------------------------------------
+       Encabezado de bienvenida
+       --------------------------------------------------------------------- *@
+    <div class="page-head">
+        <h1 class="page-display">Hola, Rogelio Osorio</h1>
+        <p class="page-lead">Este es el resumen de tus solicitudes de reembolso.</p>
+    </div>
+
+    @* ---------------------------------------------------------------------
+       Accesos rápidos — Card de acceso rápido (Biblioteca §7).
+       Sustituye los botones verdes del sistema anterior: el verde queda
+       reservado a confirmaciones inmediatas del propio usuario.
+       --------------------------------------------------------------------- *@
+    <section aria-label="Accesos rápidos" class="qa-grid">
+        <a class="qa-card"
+           asp-controller="Home"
+           asp-action="ReembolsoSolicitud">
+            <span class="qa-icon"><i data-lucide="file-plus" aria-hidden="true"></i></span>
+            <span class="qa-text">
+                <span class="qa-title">Hacer una nueva solicitud</span>
+                <span class="qa-desc">Inicia el registro de un reembolso</span>
+            </span>
+            <i data-lucide="chevron-right" class="qa-arrow" aria-hidden="true"></i>
+        </a>
+
+        <a href="#" class="qa-card">
+            <span class="qa-icon"><i data-lucide="undo-2" aria-hidden="true"></i></span>
+            <span class="qa-text">
+                <span class="qa-title">Retroceder trámite</span>
+                <span class="qa-desc">Regresa una solicitud a revisión</span>
+            </span>
+            <i data-lucide="chevron-right" class="qa-arrow" aria-hidden="true"></i>
+        </a>
+
+        <a class="qa-card"
+           asp-controller="Home"
+           asp-action="PagoSolicitud">
+            <span class="qa-icon"><i data-lucide="wallet" aria-hidden="true"></i></span>
+            <span class="qa-text">
+                <span class="qa-title">Pagos</span>
+            </span>
+            <span class="qa-badge">3 pendientes</span>
+            <i data-lucide="chevron-right" class="qa-arrow" aria-hidden="true"></i>
+        </a>
+    </section>
+
+    @* ---------------------------------------------------------------------
+       Panel de Filtros (Biblioteca §13): filtros rápidos visibles +
+       "Más filtros" expandible. Exportar como acción secundaria del panel.
+       --------------------------------------------------------------------- *@
+    <section class="filters-panel" aria-label="Filtros de búsqueda">
+        <div class="filters-panel-head">
+            <h2 class="filters-panel-title">
+                <i data-lucide="filter" aria-hidden="true"></i>
+                Filtros
+            </h2>
+            <div class="filters-panel-actions">
+                <button type="button" class="btn btn-outline-secondary" title="Exportar a Excel" aria-label="Exportar resultados a Excel">
+                    Reporte detallado
+                    <i data-lucide="file-spreadsheet" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" title="Descargar reporte" aria-label="Descargar reporte">
+                    Descargar reporte
+                    <i data-lucide="download" aria-hidden="true"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary filters-panel-toggle"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#filtrosAvanzados"
+                        aria-expanded="false"
+                        aria-controls="filtrosAvanzados"
+                        title="Mostrar u ocultar filtros">
+                        Más filtros
+                    <i data-lucide="chevron-down" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <form class="filters-form" role="search">
+            @* Filtros rápidos, siempre visibles *@
+            <div class="filters-row">
+                <partial name="Partials/_DatePicker" model='new DatePickerViewModel {
+                    Id = "fFechaDesde",
+                    Name = "fFechaDesde",
+                    Label = "Fecha desde"
+                }' />
+                <partial name="Partials/_DatePicker" model='new DatePickerViewModel {
+                    Id = "fFechaHasta",
+                    Name = "fFechaHasta",
+                    Label = "Fecha hasta"
+                }' />
+                <div class="field">
+                    <label for="fFolio" class="field-label">Folio</label>
+                    <div class="input-icon">
+                        <input type="text" id="fFolio" class="form-control" placeholder="0104XXXXXX">
+                        <i data-lucide="search" class="input-icon-glyph" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="fEstatus" class="field-label">Estatus</label>
+                    <select id="fEstatus" class="form-select">
+                        <option selected>Todos</option>
+                        <option>En proceso</option>
+                        <option>Corregido</option>
+                        <option>Aprobado</option>
+                        <option>Rechazado</option>
+                    </select>
+                </div>
+            </div>
+
+            @* Más filtros, expandible *@
+            <div class="collapse" id="filtrosAvanzados">
+                <div class="filters-row filters-row--advanced">
+                    <div class="field">
+                        <label for="fPoliza" class="field-label">No. de póliza</label>
+                        <input type="text" id="fPoliza" class="form-control" placeholder="34521098">
+                    </div>
+                    <div class="field">
+                        <label for="fCobertura" class="field-label">Cobertura</label>
+                        <select id="fCobertura" class="form-select">
+                            <option selected>Todas</option>
+                            <option>GMM Mayor</option>
+                            <option>GMM Menor</option>
+                            <option>Dental</option>
+                            <option>Maternidad</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="fFlujo" class="field-label">Flujo</label>
+                        <select id="fFlujo" class="form-select">
+                            <option selected>Todos</option>
+                            <option>Ordinario</option>
+                            <option>Urgencia</option>
+                            <option>Maternidad</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="fFolioFiscal" class="field-label">Folio fiscal</label>
+                        <input type="text" id="fFolioFiscal" class="form-control" placeholder="________-____-____">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filters-actions">
+                <button type="submit" class="btn btn-primary-vm">
+                    <i data-lucide="search" aria-hidden="true"></i> Buscar
+                </button>
+                <button type="reset" class="btn btn-text-vm">Limpiar filtros</button>
+            </div>
+        </form>
+    </section>
+
+    @* ---------------------------------------------------------------------
+       Tabla de resultados (Biblioteca §6)
+       --------------------------------------------------------------------- *@
+    <section class="table-panel" id="tabla-solicitudes" aria-label="Solicitudes de reembolso">
+        <div class="table-panel-head">
+            <span class="table-count">24 resultados</span>
+            <div class="table-page-size">
+                <label for="pageSize" class="table-page-size-label">Mostrar</label>
+                <select id="pageSize" class="form-select form-select-sm">
+                    <option>10</option>
+                    <option selected>25 &emsp;</option>
+                    <option>50</option>
+                    <option>100 &emsp;</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-scroll">
+            <table class="vm-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Folio <i data-lucide="arrow-up-down" class="th-sort" aria-hidden="true"></i></th>
+                        <th scope="col">Beneficiario</th>
+                        <th scope="col" class="ta-right">Monto <i data-lucide="arrow-up-down" class="th-sort" aria-hidden="true"></i></th>
+                        <th scope="col" class="ta-center">Fecha <i data-lucide="arrow-up-down" class="th-sort" aria-hidden="true"></i></th>
+                        <th scope="col">Estación actual</th>
+                        <th scope="col">Estatus</th>
+                        <th scope="col" class="ta-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var solicitudes = new[]
+                        {
+                            new { Folio = "0104271661", Poliza = "34521098", Nombre = "Marisol Hernández Duarte",  Parentesco = "Titular",  Monto = 12480.00m, Fecha = "03/07/2026", Estacion = "Dictamen médico",        Estatus = "En proceso" },
+                            new { Folio = "0104271662", Poliza = "34558820", Nombre = "Roberto Carlos Nieto Salas", Parentesco = "Titular",  Monto = 3260.50m,  Fecha = "02/07/2026", Estacion = "Validación documental",  Estatus = "Corregido" },
+                            new { Folio = "0104271663", Poliza = "34509912", Nombre = "Fernanda Paola Ríos Castillo", Parentesco = "Cónyuge", Monto = 850.00m,   Fecha = "01/07/2026", Estacion = "Recepción de documentos", Estatus = "En proceso" },
+                            new { Folio = "0104271664", Poliza = "34577345", Nombre = "Alejandro Gómez Treviño",   Parentesco = "Titular",  Monto = 32800.00m, Fecha = "30/06/2026", Estacion = "Autorización de pago",   Estatus = "Aprobado" },
+                            new { Folio = "0104271665", Poliza = "34512276", Nombre = "Itzel Guadalupe Montes Vera", Parentesco = "Hijo(a)", Monto = 1420.00m,  Fecha = "29/06/2026", Estacion = "Dictamen médico",        Estatus = "En proceso" },
+                            new { Folio = "0104271666", Poliza = "34598010", Nombre = "Sergio Iván Delgado Rosales", Parentesco = "Titular", Monto = 620.00m,   Fecha = "28/06/2026", Estacion = "Revisión de póliza",     Estatus = "Rechazado" },
+                            new { Folio = "0104271667", Poliza = "34533187", Nombre = "Daniela Contreras Barajas", Parentesco = "Titular",  Monto = 5140.00m,  Fecha = "27/06/2026", Estacion = "Validación documental",  Estatus = "Corregido" },
+                            new { Folio = "0104271668", Poliza = "34561429", Nombre = "Luis Fernando Aguilar Peña", Parentesco = "Cónyuge",  Monto = 9930.00m,  Fecha = "26/06/2026", Estacion = "Pago autorizado",        Estatus = "En proceso" },
+                        };
+                    }
+
+                    @foreach (var s in solicitudes)
+                    {
+                        var iniciales = string.Join("", s.Nombre.Split(' ').Where(p => p.Length > 0).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+                        (string cls, string icon) badge = s.Estatus switch
+                        {
+                            "En proceso" => ("badge-status--warning", "clock"),
+                            "Corregido"  => ("badge-status--warning", "edit-3"),
+                            "Aprobado"   => ("badge-status--success", "check-circle"),
+                            "Rechazado"  => ("badge-status--error", "x-circle"),
+                            _            => ("badge-status--neutral", "circle")
+                        };
+
+                        <tr>
+                            <td>
+                                <span class="folio-text">@s.Folio</span>
+                                <span class="folio-sub">Póliza @s.Poliza</span>
+                            </td>
+                            <td>
+                                <div class="beneficiario-cell">
+                                    <span class="avatar avatar--sm" aria-hidden="true">@iniciales</span>
+                                    <span class="beneficiario-text">
+                                        <span class="beneficiario-nombre">@s.Nombre</span>
+                                        <span class="beneficiario-parentesco">@s.Parentesco</span>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="ta-right monto-cell">@s.Monto.ToString("C2", new System.Globalization.CultureInfo("es-MX"))</td>
+                            <td class="ta-center">@s.Fecha</td>
+                            <td><span class="badge-neutral-process"><i data-lucide="map-pin" aria-hidden="true"></i>@s.Estacion</span></td>
+                            <td>
+                                <span class="badge-status @badge.cls">
+                                    <i data-lucide="@badge.icon" aria-hidden="true"></i>@s.Estatus
+                                </span>
+                            </td>
+                            <td class="ta-center">
+                                <div class="row-actions">
+                                    <a asp-controller="Home"
+                                       asp-action="DetalleSolicitud"
+                                       class="icon-btn icon-btn--sm"
+                                       title="Ver detalle"
+                                       aria-label="Ver detalle de la solicitud @s.Folio">
+                                        <i data-lucide="eye" aria-hidden="true"></i>
+                                    </a>
+                                    <button type="button"
+                                            class="icon-btn icon-btn--sm"
+                                            title="Notas y comentarios"
+                                            aria-label="Ver notas de la solicitud @s.Folio"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalNota"
+                                            data-folio="@s.Folio"
+                                            data-nombre="@s.Nombre">
+                                        <i data-lucide="message-square" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-panel-foot">
+            <span class="table-range">Mostrando 1–8 de 24</span>
+            <nav aria-label="Paginación de solicitudes">
+                <ul class="pagination pagination-vm">
+                    <li class="page-item disabled"><a class="page-link" href="#" aria-label="Primera página"><i data-lucide="chevrons-left" aria-hidden="true"></i></a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#" aria-label="Anterior"><i data-lucide="chevron-left" aria-hidden="true"></i></a></li>
+                    <li class="page-item active" aria-current="page"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#" aria-label="Siguiente"><i data-lucide="chevron-right" aria-hidden="true"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="#" aria-label="Última página"><i data-lucide="chevrons-right" aria-hidden="true"></i></a></li>
+                </ul>
+            </nav>
+        </div>
+    </section>
+</div>
+
+@* ---------------------------------------------------------------------
+   Modal de Notas (Biblioteca §8) — vista previa rápida sin salir del Tablero.
+   Contenido estático de demostración.
+   --------------------------------------------------------------------- *@
+<div class="modal fade" id="modalNota" tabindex="-1" aria-labelledby="modalNotaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalNotaLabel">Notas de la solicitud</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="note-timeline">
+                    <li class="note-item">
+                        <span class="note-icon"><i data-lucide="edit-3" aria-hidden="true"></i></span>
+                        <div class="note-body">
+                            <p class="note-text">Falta comprobante fiscal (factura CFDI) del gasto reportado. Favor de adjuntarlo para continuar.</p>
+                            <span class="note-meta">Ana López · Analista de Dictamen · 02/07/2026, 11:20 a. m.</span>
+                        </div>
+                    </li>
+                    <li class="note-item">
+                        <span class="note-icon"><i data-lucide="file-check-2" aria-hidden="true"></i></span>
+                        <div class="note-body">
+                            <p class="note-text">Documentación inicial recibida y validada correctamente.</p>
+                            <span class="note-meta">Sistema · 01/07/2026, 9:05 a. m.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-text-vm" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary-vm">Ir al detalle completo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* ====================================================================
+           ESTILOS ESPECÍFICOS DE ESTA VISTA (Tablero) — v1.2.
+           Los tokens semánticos (--vm-success-*, --vm-warning-*, --vm-error-*,
+           --vm-info-*, --vm-accent-*) y la escala tipográfica (--vm-text-*)
+           YA NO se declaran aquí: viven en tokens.css (promovidos en esta
+           misma actualización) y se consumen directamente. Cambiar el tamaño
+           de cualquier texto de esta pantalla es cambiar tokens.css, no este
+           archivo — ver la explicación al final de la respuesta.
+           ==================================================================== */
+        .tablero-view {
+            display: flex;
+            flex-direction: column;
+            gap: var(--vm-space-8);
+        }
+
+        /* Zona de mensajes de página */
+        .alert-page {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--vm-space-3);
+            border: 0;
+            border-radius: var(--vm-radius);
+            padding: var(--vm-space-4);
+            margin-bottom: var(--vm-space-6);
+        }
+        .alert-page--warning { background: var(--vm-warning-100); color: var(--vm-neutral-900); }
+        .alert-page-icon { width: 22px; height: 22px; color: var(--vm-warning-600); flex-shrink: 0; margin-top: 2px; }
+        .alert-page-body { font-size: var(--vm-text-body); }
+        .alert-page-link { margin-left: var(--vm-space-2); font-weight: 600; color: var(--vm-primary-600); text-decoration: none; }
+        .alert-page-link:hover { text-decoration: underline; }
+
+        /* Encabezado */
+        .page-head { display: flex; flex-direction: column; gap: 4px; }
+        .page-display { font-size: var(--vm-text-display); line-height: var(--vm-leading-tight); font-weight: 700; color: var(--vm-neutral-900); margin: 0; }
+        .page-lead { font-size: var(--vm-text-body); color: var(--vm-neutral-500); margin: 0; }
+
+        /* Cards de acceso rápido */
+        .qa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--vm-space-4); }
+        .qa-card {
+            display: flex; align-items: center; gap: var(--vm-space-4);
+            background: var(--vm-white); border: 1px solid var(--vm-neutral-200);
+            border-radius: var(--vm-radius-lg); padding: var(--vm-space-4) var(--vm-space-6);
+            text-decoration: none; color: inherit; transition: border-color var(--vm-transition), background var(--vm-transition);
+        }
+        .qa-card:hover { border-color: var(--vm-primary-600); background: var(--vm-primary-50, #F4F8FD); }
+        .qa-card:focus-visible { outline: 2px solid var(--vm-focus); outline-offset: 2px; }
+        .qa-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 48px; height: 48px; border-radius: var(--vm-radius); flex-shrink: 0;
+            background: var(--vm-primary-100); color: var(--vm-primary-700);
+        }
+        .qa-icon .lucide { width: 24px; height: 24px; }
+        .qa-text { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+        .qa-title { font-size: var(--vm-text-body-strong); font-weight: 600; color: var(--vm-neutral-900); }
+        .qa-desc { font-size: var(--vm-text-micro); color: var(--vm-neutral-500); }
+        .qa-badge {
+            font-size: var(--vm-text-micro); font-weight: 600; color: var(--vm-warning-600);
+            background: var(--vm-warning-100); border-radius: var(--vm-radius-pill);
+            padding: 3px 11px; white-space: nowrap;
+        }
+        .qa-arrow { width: 20px; height: 20px; color: var(--vm-neutral-300); flex-shrink: 0; }
+
+        /* KPIs */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--vm-space-4); }
+        .kpi-card {
+            background: var(--vm-white); border: 1px solid var(--vm-neutral-200);
+            border-radius: var(--vm-radius-lg); padding: var(--vm-space-4) var(--vm-space-6);
+            display: flex; flex-direction: column; gap: var(--vm-space-2);
+        }
+        .kpi-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: var(--vm-radius);
+            background: var(--vm-accent-100); color: var(--vm-accent-600); margin-bottom: 2px;
+        }
+        .kpi-icon .lucide { width: 20px; height: 20px; }
+        .kpi-value { font-size: var(--vm-text-h1); font-weight: 700; color: var(--vm-neutral-900); line-height: var(--vm-leading-tight); }
+        .kpi-label { font-size: var(--vm-text-micro); color: var(--vm-neutral-500); }
+
+        /* Panel de filtros */
+        .filters-panel { background: var(--vm-white); border: 1px solid var(--vm-neutral-200); border-radius: var(--vm-radius-lg); }
+        .filters-panel-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: var(--vm-space-4) var(--vm-space-6); border-bottom: 1px solid var(--vm-neutral-100);
+        }
+        .filters-panel-title {
+            display: flex; align-items: center; gap: var(--vm-space-2);
+            font-size: var(--vm-text-h3); font-weight: 600; color: var(--vm-neutral-900); margin: 0;
+        }
+        .filters-panel-title .lucide { width: 20px; height: 20px; color: var(--vm-neutral-700); }
+        .filters-panel-actions { display: flex; gap: var(--vm-space-2); }
+        .icon-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: var(--vm-radius);
+            border: 1px solid var(--vm-neutral-300); background: var(--vm-white); color: var(--vm-neutral-700);
+            cursor: pointer; transition: background var(--vm-transition), border-color var(--vm-transition);
+        }
+        .icon-btn:hover { background: var(--vm-neutral-100); border-color: var(--vm-neutral-300); }
+        .icon-btn:focus-visible { outline: 2px solid var(--vm-focus); outline-offset: 2px; }
+        .icon-btn .lucide { width: 20px; height: 20px; }
+        .icon-btn--sm { width: 36px; height: 36px; border-color: transparent; }
+        .filters-panel-toggle[aria-expanded="true"] .lucide { transform: rotate(180deg); }
+        .filters-panel-toggle .lucide { transition: transform var(--vm-transition); }
+
+        .filters-form { padding: var(--vm-space-6); display: flex; flex-direction: column; gap: var(--vm-space-4); }
+        .filters-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--vm-space-4); }
+        .filters-row--advanced { margin-top: var(--vm-space-4); padding-top: var(--vm-space-4); border-top: 1px dashed var(--vm-neutral-200); }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field-label { font-size: var(--vm-text-label); font-weight: 500; color: var(--vm-neutral-700); }
+        .input-icon { position: relative; }
+        .input-icon .form-control { padding-right: 40px; }
+        .input-icon-glyph { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--vm-neutral-500); pointer-events: none; }
+        .filters-actions { display: flex; gap: var(--vm-space-3); }
+
+        .btn-primary-vm {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            background: var(--vm-primary-600); color: #fff; border: 0; min-height: var(--vm-control-h);
+            border-radius: var(--vm-radius); padding: 10px 20px; font-size: var(--vm-text-body); font-weight: 600;
+        }
+        .btn-primary-vm:hover { background: var(--vm-primary-700); color: #fff; }
+        .btn-primary-vm .lucide { width: 18px; height: 18px; }
+        .btn-text-vm {
+            background: transparent; border: 0; color: var(--vm-primary-600); min-height: var(--vm-control-h);
+            font-size: var(--vm-text-body); font-weight: 600; padding: 10px 14px;
+        }
+        .btn-text-vm:hover { text-decoration: underline; color: var(--vm-primary-700); }
+
+        /* Tabla */
+        .table-panel { background: var(--vm-white); border: 1px solid var(--vm-neutral-200); border-radius: var(--vm-radius-lg); overflow: hidden; }
+        .table-panel-head { display: flex; align-items: center; justify-content: space-between; padding: var(--vm-space-4) var(--vm-space-6); }
+        .table-count { font-size: var(--vm-text-small); font-weight: 600; color: var(--vm-neutral-700); }
+        .table-page-size { display: flex; align-items: center; gap: 8px; }
+        .table-page-size-label { font-size: var(--vm-text-small); color: var(--vm-neutral-500); }
+        .table-page-size .form-select { width: auto; }
+
+        .table-scroll { overflow-x: auto; }
+        .vm-table { width: 100%; border-collapse: collapse; font-size: var(--vm-text-body); }
+        .vm-table thead th {
+            position: sticky; top: 0; background: var(--vm-neutral-50);
+            text-align: left; font-size: var(--vm-text-small); font-weight: 600; color: var(--vm-neutral-700);
+            padding: 12px var(--vm-space-4); border-bottom: 1px solid var(--vm-neutral-200); white-space: nowrap;
+        }
+        .th-sort { width: 15px; height: 15px; color: var(--vm-neutral-300); margin-left: 4px; vertical-align: middle; cursor: pointer; }
+        .vm-table tbody td { padding: var(--vm-space-4); border-bottom: 1px solid var(--vm-neutral-100); vertical-align: middle; color: var(--vm-neutral-900); }
+        .vm-table tbody tr:hover td { background: var(--vm-neutral-50); }
+        .ta-right { text-align: right; }
+        .ta-center { text-align: center; }
+
+        .folio-text { display: block; font-weight: 600; }
+        .folio-sub { display: block; font-size: var(--vm-text-micro); color: var(--vm-neutral-500); }
+
+        .beneficiario-cell { display: flex; align-items: center; gap: 10px; }
+        .avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--vm-primary-100); color: var(--vm-primary-700); font-weight: 600; flex-shrink: 0; }
+        .avatar--sm { width: 32px; height: 32px; font-size: var(--vm-text-micro); }
+        .beneficiario-text { display: flex; flex-direction: column; }
+        .beneficiario-nombre { font-weight: 500; }
+        .beneficiario-parentesco { font-size: var(--vm-text-micro); color: var(--vm-neutral-500); }
+
+        .monto-cell { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        .badge-neutral-process {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--vm-neutral-100); color: var(--vm-neutral-700);
+            border-radius: var(--vm-radius-pill); padding: 5px 11px; font-size: var(--vm-text-micro); white-space: nowrap;
+        }
+        .badge-neutral-process .lucide { width: 15px; height: 15px; }
+
+        .badge-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            border-radius: var(--vm-radius-pill); padding: 5px 11px; font-size: var(--vm-text-micro); font-weight: 600;
+            color: var(--vm-neutral-900); white-space: nowrap;
+        }
+        .badge-status .lucide { width: 15px; height: 15px; }
+        .badge-status--warning { background: var(--vm-warning-100); }
+        .badge-status--warning .lucide { color: var(--vm-warning-600); }
+        .badge-status--success { background: var(--vm-success-100); }
+        .badge-status--success .lucide { color: var(--vm-success-600); }
+        .badge-status--error { background: var(--vm-error-100); }
+        .badge-status--error .lucide { color: var(--vm-error-600); }
+        .badge-status--neutral { background: var(--vm-neutral-100); }
+        .badge-status--neutral .lucide { color: var(--vm-neutral-500); }
+
+        .row-actions { display: flex; align-items: center; justify-content: center; gap: 4px; }
+
+        .table-panel-foot {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: var(--vm-space-4) var(--vm-space-6); border-top: 1px solid var(--vm-neutral-100);
+        }
+        .table-range { font-size: var(--vm-text-small); color: var(--vm-neutral-500); }
+
+        .pagination-vm .page-link {
+            color: var(--vm-neutral-700); border-color: var(--vm-neutral-200);
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: var(--vm-control-h); min-height: var(--vm-control-h);
+            font-size: var(--vm-text-body);
+        }
+        .pagination-vm .page-link .lucide { width: 18px; height: 18px; }
+        .pagination-vm .page-item.active .page-link { background: var(--vm-primary-600); border-color: var(--vm-primary-600); color: #fff; }
+        .pagination-vm .page-link:focus { box-shadow: 0 0 0 2px var(--vm-primary-100); }
+
+        /* Modal de notas */
+        .note-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--vm-space-4); }
+        .note-item { display: flex; gap: var(--vm-space-3); }
+        .note-icon {
+            display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+            width: 36px; height: 36px; border-radius: 50%; background: var(--vm-primary-100); color: var(--vm-primary-700);
+        }
+        .note-icon .lucide { width: 18px; height: 18px; }
+        .note-text { margin: 0 0 4px; font-size: var(--vm-text-body); color: var(--vm-neutral-900); }
+        .note-meta { font-size: var(--vm-text-micro); color: var(--vm-neutral-500); }
+
+        /* Responsive */
+        @@media (max-width: 1199.98px) {
+            .qa-grid { grid-template-columns: repeat(2, 1fr); }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .filters-row { grid-template-columns: repeat(2, 1fr); }
+        }
+        @@media (max-width: 767.98px) {
+            .qa-grid { grid-template-columns: 1fr; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .filters-row { grid-template-columns: 1fr; }
+            .table-panel-head, .table-panel-foot { flex-direction: column; align-items: flex-start; gap: var(--vm-space-3); }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Rellena el título del modal de notas con el folio/beneficiario de la fila que lo abrió.
+        // Interacción puramente visual (demo de alta fidelidad, sin llamada a datos).
+        document.addEventListener('DOMContentLoaded', function () {
+            var modalNota = document.getElementById('modalNota');
+            if (!modalNota) return;
+            modalNota.addEventListener('show.bs.modal', function (event) {
+                var trigger = event.relatedTarget;
+                if (!trigger) return;
+                var folio = trigger.getAttribute('data-folio');
+                var nombre = trigger.getAttribute('data-nombre');
+                var title = modalNota.querySelector('#modalNotaLabel');
+                if (title && folio) {
+                    title.textContent = 'Notas de la solicitud ' + folio + (nombre ? ' · ' + nombre : '');
+                }
+            });
+        });
+    </script>
+}
