@@ -88,7 +88,7 @@
         <i data-lucide="info" class="alert-page-icon" aria-hidden="true"></i>
         <div class="alert-page-body">
             <strong>Antes de solicitar tu reembolso</strong>, asegúrate de haber recibido por parte de tu proveedor médico los archivos XML y PDF, y de tenerlos guardados e identificados en tu equipo.
-            <a href="#" class="alert-page-link">Consulta los documentos necesarios</a>
+            <a href="#" class="alert-page-link" data-bs-toggle="modal" data-bs-target="#modalDocumentosAyuda">Consulta los documentos necesarios aquí</a>
         </div>
     </div>
 }
@@ -145,19 +145,12 @@
                             <input type="text" id="inputCP" name="AseguradoTitular.CodigoPostal" class="form-control" placeholder="75070" inputmode="numeric" maxlength="5">
                         </div>
                         <div class="field">
-                            <label class="field-label" for="selectEstado">Estado</label>
-                            <select id="selectEstado" name="AseguradoTitular.Estado" class="form-select">
-                                <option value="">-- Seleccionar Estado --</option>
-                                <option>Puebla</option>
-                                <option>Ciudad de México</option>
-                                <option>Jalisco</option>
-                            </select>
+                            <label class="field-label" for="inputEstado">Estado</label>
+                            <input type="text" id="inputEstado" name="AseguradoTitular.Estado" class="form-control" placeholder="Se completa con el codigo postal" disabled>
                         </div>
                         <div class="field">
-                            <label class="field-label" for="selectMunicipio">Municipio</label>
-                            <select id="selectMunicipio" name="AseguradoTitular.Municipio" class="form-select" disabled>
-                                <option value="">-- Seleccionar Estado primero --</option>
-                            </select>
+                            <label class="field-label" for="inputMunicipio">Municipio</label>
+                            <input type="text" id="inputMunicipio" name="AseguradoTitular.Municipio" class="form-control" placeholder="Se completa con el codigo postal" disabled>
                         </div>
                         <partial name="Partials/_DatePicker" model='new DatePickerViewModel {
                             Id = "inputFechaPadecimiento",
@@ -195,14 +188,14 @@
         @* =================================================================
            SECCIÓN 2 · Datos del paciente o derechohabiente
            ================================================================= *@
-        <section class="form-section" aria-label="Datos del paciente o derechohabiente">
-            <button type="button" class="form-section-header" aria-expanded="true" aria-controls="seccionPaciente" data-bs-toggle="collapse" data-bs-target="#seccionPaciente">
+        <section class="form-section" id="seccionPacienteWrapper" aria-label="Datos del paciente o derechohabiente" hidden>
+            <button type="button" class="form-section-header" aria-expanded="false" aria-controls="seccionPaciente" data-bs-toggle="collapse" data-bs-target="#seccionPaciente">
                 <span class="form-section-number">2</span>
                 <span class="form-section-title">Datos del paciente o derechohabiente</span>
                 <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
             </button>
 
-            <div id="seccionPaciente" class="collapse show">
+            <div id="seccionPaciente" class="collapse">
                 <div class="form-section-body">
                     <div class="field-grid">
                         <div class="field">
@@ -223,14 +216,14 @@
         @* =================================================================
            SECCIÓN 3 · Datos de la reclamación
            ================================================================= *@
-        <section class="form-section" aria-label="Datos de la reclamación">
-            <button type="button" class="form-section-header" aria-expanded="true" aria-controls="seccionReclamacion" data-bs-toggle="collapse" data-bs-target="#seccionReclamacion">
+        <section class="form-section" id="seccionReclamacionWrapper" aria-label="Datos de la reclamación" hidden>
+            <button type="button" class="form-section-header" aria-expanded="false" aria-controls="seccionReclamacion" data-bs-toggle="collapse" data-bs-target="#seccionReclamacion">
                 <span class="form-section-number">3</span>
                 <span class="form-section-title">Datos de la reclamación</span>
                 <i data-lucide="chevron-down" class="form-section-chevron" aria-hidden="true"></i>
             </button>
 
-            <div id="seccionReclamacion" class="collapse show">
+            <div id="seccionReclamacion" class="collapse">
                 <div class="form-section-body">
 
                     <div class="field" style="max-width:520px">
@@ -449,6 +442,15 @@
     </form>
 </div>
 
+@* =================================================================
+   Botón flotante de ayuda — abre el mismo modal que el enlace de la
+   franja informativa (data-bs-target compartido, no hay dos modales).
+   ================================================================= *@
+<button type="button" class="help-float-btn" data-bs-toggle="modal" data-bs-target="#modalDocumentosAyuda" aria-label="¿Necesitas ayuda? Consulta los documentos necesarios">
+    <i data-lucide="circle-help" aria-hidden="true"></i>
+    <span class="help-float-btn-text">¿Necesitas ayuda?</span>
+</button>
+
 @* =====================================================================
    Modal · Buscar Derechohabiente (punto de partida del flujo)
    ===================================================================== *@
@@ -493,6 +495,152 @@
             <div class="modal-footer">
                 <button type="button" class="btn-text-vm" data-bs-dismiss="modal">Seguir editando</button>
                 <button type="button" class="btn btn-outline-danger" data-confirmar-cancelar data-href="/">Sí, cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* =====================================================================
+   Modal · Documentos necesarios (ayuda)
+   Único modal, reutilizado por dos disparadores: el enlace de la franja
+   informativa y el botón flotante "¿Necesitas ayuda?". Acordeón construido
+   con las mismas clases visuales de .doc-block (ya usadas en esta vista
+   para Factura y documentos por categoría) + collapse nativo de Bootstrap
+   con data-bs-parent, para que solo una categoría esté abierta a la vez
+   (sin JavaScript nuevo).
+   ===================================================================== *@
+<div class="modal fade" id="modalDocumentosAyuda" tabindex="-1" aria-labelledby="modalDocumentosAyudaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalDocumentosAyudaLabel">Documentos necesarios</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ayuda-accordion" id="accordionDocumentosAyuda">
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-consultas" aria-expanded="false" aria-controls="ayuda-consultas">
+                            <i data-lucide="stethoscope" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Consultas</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-consultas" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <p class="ayuda-text">Solo de médicos con cédula profesional. Incluye nutriólogo, psicólogo y/o psiquiatra.</p>
+                            <p class="ayuda-text"><strong>No se cubre homeopatía, acupuntura o dermatología.</strong></p>
+                            <p class="ayuda-text">Monto máximo por consulta a pagar es de hasta $2,500.00.</p>
+                        </div>
+                    </div>
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-medicamentos" aria-expanded="false" aria-controls="ayuda-medicamentos">
+                            <i data-lucide="pill" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Medicamentos prescritos</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-medicamentos" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <p class="ayuda-text">Se requieren recetas médicas y los medicamentos deben estar registrados en la COFEPRIS.</p>
+                            <p class="ayuda-text">Tope de hasta $10,000 MXN anual. Límite por certificado (familia).</p>
+                        </div>
+                    </div>
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-vacunas" aria-expanded="false" aria-controls="ayuda-vacunas">
+                            <i data-lucide="syringe" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Vacunas</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-vacunas" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <p class="ayuda-text">Se requiere cartilla de vacunación actualizada.</p>
+                            <p class="ayuda-text">Incluye vacunas requeridas para viajes.</p>
+                        </div>
+                    </div>
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-laboratorio" aria-expanded="false" aria-controls="ayuda-laboratorio">
+                            <i data-lucide="flask-conical" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Exámenes de laboratorio y/o gabinete de primer contacto</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-laboratorio" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <p class="ayuda-text">Siempre y cuando no estén relacionados con un padecimiento reclamado en la póliza de Grupo.</p>
+                            <p class="ayuda-text">Se requiere orden médica (receta).</p>
+                            <p class="ayuda-text">La factura debe indicar claramente el nombre de los estudios y el precio unitario; de lo contrario se requiere el desglose del laboratorio, gabinete u hospital.</p>
+                            <p class="ayuda-text">Monto máximo de hasta $5,000 MXN a cubrir por evento.</p>
+                        </div>
+                    </div>
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-cuidados" aria-expanded="false" aria-controls="ayuda-cuidados">
+                            <i data-lucide="heart-pulse" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Cuidados preventivos (enfermería, terapias)</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-cuidados" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <p class="ayuda-text">A consecuencia de una enfermedad o accidente que no haya sido cubierto en la póliza de Grupo (enfermería y fisioterapia preventiva).</p>
+                            <p class="ayuda-text">Monto máximo para cubrir de hasta $10,000 MXN. Límite por certificado (familia).</p>
+                        </div>
+                    </div>
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-audicion" aria-expanded="false" aria-controls="ayuda-audicion">
+                            <i data-lucide="ear" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Exámenes de audición</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-audicion" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <p class="ayuda-text">Se requiere orden médica.</p>
+                            <p class="ayuda-text">Monto máximo para cubrir de hasta $2,000 MXN por año. Límite por certificado (familia).</p>
+                        </div>
+                    </div>
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-lentes" aria-expanded="false" aria-controls="ayuda-lentes">
+                            <i data-lucide="glasses" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Lentes graduados</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-lentes" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <p class="ayuda-text">Siempre y cuando sean prescritos por un médico oftalmólogo certificado. La factura debe ser emitida por un proveedor legalmente establecido para la venta de dichos productos.</p>
+                            <p class="ayuda-text">Especificación de cobertura: lentes de armazón, lentes de contacto, lentes progresivos o lentes de sol, siempre y cuando cuenten con graduación.</p>
+                            <p class="ayuda-text">Monto máximo para cubrir de hasta $5,000 MXN por año. Límite por certificado (familia).</p>
+                        </div>
+                    </div>
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-extranjero" aria-expanded="false" aria-controls="ayuda-extranjero">
+                            <i data-lucide="plane" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Gastos en el extranjero</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-extranjero" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <p class="ayuda-text">Se requiere factura y comprobante de pago.</p>
+                            <p class="ayuda-text">Límite hasta la suma asegurada, de gastos médicos menores.</p>
+                        </div>
+                    </div>
+
+                    <div class="doc-block">
+                        <button type="button" class="doc-block-header" data-bs-toggle="collapse" data-bs-target="#ayuda-exclusiones" aria-expanded="false" aria-controls="ayuda-exclusiones">
+                            <i data-lucide="alert-triangle" class="doc-block-icon" aria-hidden="true"></i>
+                            <span class="doc-block-name">Exclusiones</span>
+                            <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div id="ayuda-exclusiones" class="doc-block-body collapse" data-bs-parent="#accordionDocumentosAyuda">
+                            <ol class="ayuda-list">
+                                <li>Gastos relacionados a la acupuntura, homeopatía o dermatología; se excluirían únicamente tratamientos estéticos y/o cosméticos.</li>
+                                <li>Gastos erogados que superen el deducible de la póliza de Gastos Médicos Mayores de Grupo ($8,616 MXN).</li>
+                                <li>Gastos sin sustento médico. Ejemplo: medicamentos y/o estudios reclamados sin receta.</li>
+                                <li>Gastos de tratamientos estéticos (protector solar, suero, vitamínicos, suplementos y complementos alimenticios).</li>
+                                <li>Gastos prescritos por médicos con especialidad no relacionada al gasto reclamado.</li>
+                                <li>Gastos relacionados a la fertilidad o control natal (anticonceptivos, pruebas de embarazo, entre otros).</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-text-vm" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
