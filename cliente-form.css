@@ -1,0 +1,131 @@
+/* ============================================================================
+   cliente-form.css — Estilos exclusivos del formulario compartido de Cliente
+   (_ClienteForm.cshtml, usado por CreacionCliente y DetalleCliente). Consume
+   únicamente tokens ya definidos en tokens.css (--vm-*) y reutiliza las clases
+   de estructura ya existentes (.form-section, .field-grid, .doc-file-add,
+   .doc-file-remove, .doc-gen-btn) definidas en reembolso-solicitud.css. Aquí
+   solo se agregan las piezas de marcado que ese archivo no cubre: la tarjeta
+   de Filial y la cuadrícula de CheckBox de Módulos/Coberturas/Documentos.
+   ============================================================================ */
+
+.cliente-form-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vm-space-8);
+}
+
+.page-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.page-display {
+    font-size: var(--vm-text-display);
+    line-height: var(--vm-leading-tight);
+    font-weight: 700;
+    color: var(--vm-neutral-900);
+    margin: 0;
+}
+
+.page-lead {
+    font-size: var(--vm-text-body);
+    color: var(--vm-neutral-500);
+    margin: 0;
+}
+
+/* Asterisco de campo requerido (gap ya existente en el proyecto: usado por
+   _DatePicker.cshtml pero nunca estilizado hasta ahora). */
+.field-required {
+    color: var(--vm-error-600);
+    font-weight: 700;
+}
+
+/* ----------------------------------------------------------------------------
+   Sección 2 · Filiales — tarjeta por filial dinámica.
+   ---------------------------------------------------------------------------- */
+.filial-card {
+    border: 1px solid var(--vm-neutral-200);
+    border-radius: var(--vm-radius);
+    padding: var(--vm-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--vm-space-4);
+    margin-bottom: var(--vm-space-4);
+}
+
+.filial-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filial-card-title {
+    font-size: var(--vm-text-body-strong);
+    font-weight: 600;
+    color: var(--vm-neutral-900);
+}
+
+/* ----------------------------------------------------------------------------
+   Secciones 3/4/5 · Módulos, Coberturas, Documentos requeridos — cuadrícula
+   de CheckBox. Reutiliza el mismo lenguaje visual de .solicitar-check
+   (reembolso-solicitud.css) para cada casilla individual.
+   ---------------------------------------------------------------------------- */
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--vm-space-3);
+}
+
+.checkbox-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--vm-neutral-200);
+    border-radius: var(--vm-radius);
+    padding: 12px var(--vm-space-4);
+    font-size: var(--vm-text-body);
+    font-weight: 500;
+    color: var(--vm-neutral-900);
+    cursor: pointer;
+}
+
+    .checkbox-tile:has(.form-check-input:checked) {
+        background: var(--vm-primary-100);
+        border-color: var(--vm-primary-600);
+        color: var(--vm-primary-700);
+        font-weight: 600;
+    }
+
+    .checkbox-tile .form-check-input {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+@media (max-width: 1199.98px) {
+    .field-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .checkbox-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .checkbox-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+}

@@ -1,0 +1,16 @@
+@model ClienteViewModel
+@{
+    ViewData["Title"] = "Editar cliente";
+    ViewData["Titulo"] = "Editar cliente";
+    ViewData["TextoBotonGuardar"] = "Guardar cambios";
+}
+
+<partial name="Partials/_ClienteForm" model="Model" view-data="ViewData" />
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/cliente-form.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/cliente-form.js" asp-append-version="true"></script>
+}

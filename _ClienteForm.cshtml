@@ -1,0 +1,311 @@
+@model ClienteViewModel
+@{
+    // Contrato del partial: Create y Edit pasan el mismo ClienteViewModel y
+    // difieren únicamente en estos dos valores de ViewData (título de página
+    // y texto del botón principal) — ninguna otra diferencia de marcado.
+    var titulo = ViewData["Titulo"] as string ?? "Cliente";
+    var textoBotonGuardar = ViewData["TextoBotonGuardar"] as string ?? "Guardar";
+}
+
+<div class="cliente-form-view">
+
+    <div class="page-head mt-3">
+        <h1 class="page-display">@titulo</h1>
+        <p class="page-lead">Completa los datos del cliente. Las secciones siguientes aparecen conforme se completa la información requerida.</p>
+    </div>
+
+    <form id="formCliente" novalidate>
+
+        @* =================================================================
+           SECCIÓN 1 · Cliente — siempre visible (imagen de referencia Grupo)
+           ================================================================= *@
+        <section class="form-section" aria-label="Datos del cliente">
+            <div class="form-section-header">
+                <span class="form-section-number">1</span>
+                <span class="form-section-title">Cliente</span>
+            </div>
+            <div class="form-section-body">
+                <div class="field-grid">
+                    <div class="field">
+                        <label class="field-label" for="inputNombreORazonSocial">Nombre o razón social <span class="field-required" aria-hidden="true">*</span></label>
+                        <input type="text" id="inputNombreORazonSocial" name="Cliente.NombreORazonSocial" class="form-control" value="@Model.NombreORazonSocial" required data-campo-requerido>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="inputRfc">RFC <span class="field-required" aria-hidden="true">*</span></label>
+                        <input type="text" id="inputRfc" name="Cliente.Rfc" class="form-control" value="@Model.Rfc" maxlength="13" required data-campo-requerido>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="inputTelefono">Teléfono <span class="field-required" aria-hidden="true">*</span></label>
+                        <input type="tel" id="inputTelefono" name="Cliente.Telefono" class="form-control" value="@Model.Telefono" required data-campo-requerido>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="inputNombreContacto">Nombre de contacto <span class="field-required" aria-hidden="true">*</span></label>
+                        <input type="text" id="inputNombreContacto" name="Cliente.NombreContacto" class="form-control" value="@Model.NombreContacto" required data-campo-requerido>
+                    </div>
+                </div>
+
+                <div class="field-grid">
+                    <div class="field">
+                        <label class="field-label" for="inputDescripcionCorta">Descripción corta / Clave <span class="field-required" aria-hidden="true">*</span></label>
+                        <input type="text" id="inputDescripcionCorta" name="Cliente.DescripcionCorta" class="form-control" value="@Model.DescripcionCorta" maxlength="8" required data-campo-requerido>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="inputDireccion">Dirección</label>
+                        <input type="text" id="inputDireccion" name="Cliente.Direccion" class="form-control" value="@Model.Direccion">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="inputTelefonoContacto">Teléfono de contacto</label>
+                        <input type="tel" id="inputTelefonoContacto" name="Cliente.TelefonoContacto" class="form-control" value="@Model.TelefonoContacto">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="inputTelefonoInterior">Teléfono interior</label>
+                        <input type="tel" id="inputTelefonoInterior" name="Cliente.TelefonoInterior" class="form-control" value="@Model.TelefonoInterior">
+                    </div>
+                </div>
+
+                <div class="field-grid">
+                    <div class="field">
+                        <label class="field-label" for="inputTelefonoAtencion">Teléfono de atención</label>
+                        <input type="tel" id="inputTelefonoAtencion" name="Cliente.TelefonoAtencion" class="form-control" value="@Model.TelefonoAtencion">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="inputPrestadorServicio">Prestador de servicio</label>
+                        <input type="text" id="inputPrestadorServicio" name="Cliente.PrestadorServicio" class="form-control" value="@Model.PrestadorServicio">
+                    </div>
+                    <partial name="Partials/_DatePicker" model='new DatePickerViewModel
+                             {
+                                 Id = "inputFechaCorte",
+                                 Name = "Cliente.FechaCorte",
+                                 Label = "Fecha de corte",
+                                 Value = Model.FechaCorte
+                             }' />
+                    <partial name="Partials/_DatePicker" model='new DatePickerViewModel
+                             {
+                                 Id = "inputFechaDiaHabil",
+                                 Name = "Cliente.FechaDiaHabil",
+                                 Label = "Día hábil de corte",
+                                 Value = Model.FechaDiaHabil
+                             }' />
+                </div>
+
+                <div class="field">
+                    <label class="solicitar-check" for="inputImprimeCredencial">
+                        <input type="checkbox" class="form-check-input" id="inputImprimeCredencial" name="Cliente.ImprimeCredencial" @(Model.ImprimeCredencial ? "checked" : "")>
+                        Imprime credencial
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        @* =================================================================
+           SECCIÓN 2 · Filiales — dinámica, opcional, no bloquea el flujo
+           (imagen de referencia SubGrupo)
+           ================================================================= *@
+        <section class="form-section" id="seccionFilialesWrapper" aria-label="Filiales" hidden>
+            <div class="form-section-header">
+                <span class="form-section-number">2</span>
+                <span class="form-section-title">Filiales</span>
+            </div>
+            <div class="form-section-body">
+                <div id="listaFiliales">
+                    @for (var i = 0; i < Model.Filiales.Count; i++)
+                    {
+                        var filial = Model.Filiales[i];
+                        <div class="filial-card">
+                            <div class="filial-card-head">
+                                <span class="filial-card-title">Filial</span>
+                                <button type="button" class="doc-file-remove" data-filial-eliminar title="Quitar filial" aria-label="Quitar filial">
+                                    <i data-lucide="trash-2" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label class="field-label">Nombre o razón social</label>
+                                    <input type="text" class="form-control" data-filial-campo="NombreORazonSocial" name="Cliente.Filiales[@i].NombreORazonSocial" value="@filial.NombreORazonSocial">
+                                </div>
+                                <div class="field">
+                                    <label class="field-label">RFC</label>
+                                    <input type="text" class="form-control" data-filial-campo="Rfc" name="Cliente.Filiales[@i].Rfc" maxlength="13" value="@filial.Rfc">
+                                </div>
+                                <div class="field">
+                                    <label class="field-label">Teléfono</label>
+                                    <input type="tel" class="form-control" data-filial-campo="Telefono" name="Cliente.Filiales[@i].Telefono" value="@filial.Telefono">
+                                </div>
+                                <div class="field">
+                                    <label class="field-label">Nombre de contacto</label>
+                                    <input type="text" class="form-control" data-filial-campo="NombreContacto" name="Cliente.Filiales[@i].NombreContacto" value="@filial.NombreContacto">
+                                </div>
+                                <div class="field">
+                                    <label class="field-label">Dirección</label>
+                                    <input type="text" class="form-control" data-filial-campo="Direccion" name="Cliente.Filiales[@i].Direccion" value="@filial.Direccion">
+                                </div>
+                                <div class="field">
+                                    <label class="field-label">Descripción corta</label>
+                                    <input type="text" class="form-control" data-filial-campo="DescripcionCorta" name="Cliente.Filiales[@i].DescripcionCorta" maxlength="8" value="@filial.DescripcionCorta">
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button type="button" class="doc-file-add" id="btnAgregarFilial">
+                    <i data-lucide="plus-circle" aria-hidden="true"></i> Agregar Filial
+                </button>
+            </div>
+        </section>
+
+        @* Plantilla de una Filial — clonada por cliente-form.js, nunca renderizada tal cual. *@
+        <template id="filialTemplate">
+            <div class="filial-card">
+                <div class="filial-card-head">
+                    <span class="filial-card-title">Filial</span>
+                    <button type="button" class="doc-file-remove" data-filial-eliminar title="Quitar filial" aria-label="Quitar filial">
+                        <i data-lucide="trash-2" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="field-grid">
+                    <div class="field">
+                        <label class="field-label">Nombre o razón social</label>
+                        <input type="text" class="form-control" data-filial-campo="NombreORazonSocial">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">RFC</label>
+                        <input type="text" class="form-control" data-filial-campo="Rfc" maxlength="13">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Teléfono</label>
+                        <input type="tel" class="form-control" data-filial-campo="Telefono">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Nombre de contacto</label>
+                        <input type="text" class="form-control" data-filial-campo="NombreContacto">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Dirección</label>
+                        <input type="text" class="form-control" data-filial-campo="Direccion">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Descripción corta</label>
+                        <input type="text" class="form-control" data-filial-campo="DescripcionCorta" maxlength="8">
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        @* =================================================================
+           SECCIÓN 3 · Módulos — CheckBox, catálogo hardcodeado
+           ================================================================= *@
+        <section class="form-section" id="seccionModulosWrapper" aria-label="Módulos" hidden>
+            <div class="form-section-header">
+                <span class="form-section-number">3</span>
+                <span class="form-section-title">Módulos</span>
+            </div>
+            <div class="form-section-body">
+                <div class="checkbox-grid" data-checkbox-group="modulos">
+                    @foreach (var (modulo, idx) in ClienteViewModel.CatalogoModulos.Select((m, i) => (m, i)))
+                    {
+                        var id = "modulo-" + idx;
+                        <label class="checkbox-tile" for="@id">
+                            <input type="checkbox" class="form-check-input" id="@id" name="Cliente.ModulosSeleccionados" value="@modulo" @(Model.ModulosSeleccionados.Contains(modulo) ? "checked" : "")>
+                            @modulo
+                        </label>
+                    }
+                </div>
+            </div>
+        </section>
+
+        @* =================================================================
+           SECCIÓN 4 · Coberturas — CheckBox, catálogo hardcodeado
+           ================================================================= *@
+        <section class="form-section" id="seccionCoberturasWrapper" aria-label="Coberturas" hidden>
+            <div class="form-section-header">
+                <span class="form-section-number">4</span>
+                <span class="form-section-title">Coberturas</span>
+            </div>
+            <div class="form-section-body">
+                <div class="checkbox-grid" data-checkbox-group="coberturas">
+                    @foreach (var (cobertura, idx) in ClienteViewModel.CatalogoCoberturas.Select((c, i) => (c, i)))
+                    {
+                        var id = "cobertura-" + idx;
+                        <label class="checkbox-tile" for="@id">
+                            <input type="checkbox" class="form-check-input" id="@id" name="Cliente.CoberturasSeleccionadas" value="@cobertura" @(Model.CoberturasSeleccionadas.Contains(cobertura) ? "checked" : "")>
+                            @cobertura
+                        </label>
+                    }
+                </div>
+            </div>
+        </section>
+
+        @* =================================================================
+           SECCIÓN 5 · Documentos requeridos — CheckBox, catálogo hardcodeado
+           ================================================================= *@
+        <section class="form-section" id="seccionDocumentosWrapper" aria-label="Documentos requeridos" hidden>
+            <div class="form-section-header">
+                <span class="form-section-number">5</span>
+                <span class="form-section-title">Documentos requeridos</span>
+            </div>
+            <div class="form-section-body">
+                <div class="checkbox-grid" data-checkbox-group="documentos">
+                    @foreach (var (documento, idx) in ClienteViewModel.CatalogoDocumentos.Select((d, i) => (d, i)))
+                    {
+                        var id = "documento-" + idx;
+                        <label class="checkbox-tile" for="@id">
+                            <input type="checkbox" class="form-check-input" id="@id" name="Cliente.DocumentosSeleccionados" value="@documento" @(Model.DocumentosSeleccionados.Contains(documento) ? "checked" : "")>
+                            @documento
+                        </label>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions mt-3">
+            <a href="@Url.Action("Clientes", "Home")" class="doc-gen-btn doc-gen-btn--danger">Cancelar</a>
+            <button type="submit" class="btn btn-success" id="btnGuardarCliente" disabled>
+                <i data-lucide="check" aria-hidden="true"></i> @textoBotonGuardar
+            </button>
+        </div>
+    </form>
+</div>
+
+@* =====================================================================
+   Modal · Confirmar eliminación de Filial
+   ===================================================================== *@
+<div class="modal fade" id="modalConfirmarEliminarFilial" tabindex="-1" aria-labelledby="modalConfirmarEliminarFilialLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalConfirmarEliminarFilialLabel">¿Quitar esta filial?</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0;color:var(--vm-neutral-900)">Perderás la información capturada en esta filial. Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-text-vm" data-bs-dismiss="modal">Seguir editando</button>
+                <button type="button" class="btn btn-outline-danger" id="btnConfirmarEliminarFilial">Sí, quitar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* =====================================================================
+   Modal · Cliente guardado (modal informativo reutilizable — misma
+   anatomía que el resto de modales del proyecto: header/body/footer)
+   ===================================================================== *@
+<div class="modal fade" id="modalClienteGuardado" tabindex="-1" aria-labelledby="modalClienteGuardadoLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalClienteGuardadoLabel">
+                    <i data-lucide="check-circle" aria-hidden="true" style="color:var(--vm-success-600);width:22px;height:22px;vertical-align:-4px;margin-right:8px"></i>
+                    Cliente guardado
+                </h2>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0;color:var(--vm-neutral-900)">La información del cliente se guardó correctamente.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-primary-vm" id="btnCerrarModalGuardado" data-href="@Url.Action("Clientes", "Home")">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
