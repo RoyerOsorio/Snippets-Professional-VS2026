@@ -1,0 +1,544 @@
+﻿@{
+    ViewData["Title"] = "Detalle de folio";
+
+    // ------------------------------------------------------------------
+    // Datos de vista (hardcoded, misma fase que el resto de pantallas de
+    // negocio del proyecto — ver DetalleSolicitud/ReembolsoSolicitud).
+    // Vista de solo lectura del portal del Asegurado: reutiliza el patrón
+    // visual ya construido en DetalleSolicitud.cshtml (secciones, doc-block,
+    // claim-table, modales ICD) para el mismo dominio de folio/reclamación,
+    // adaptado a la referencia de Asegurado (Asegurado1/2/3).
+    // ------------------------------------------------------------------
+    var folio = "0000926100";
+}
+
+<div class="asegurado-view">
+
+    @* =================================================================
+       Ruta de navegación (Tablero > folio) — exclusivo de esta pantalla,
+       la referencia de Asegurado es la única que la muestra.
+       ================================================================= *@
+    <nav class="asegurado-breadcrumb" aria-label="Ruta de navegación">
+        <a asp-controller="Home" asp-action="Index">Tablero</a>
+        <i data-lucide="chevron-right" aria-hidden="true"></i>
+        <span aria-current="page">@folio</span>
+    </nav>
+
+    @* =================================================================
+       Encabezado del folio + tabs de estatus del trámite
+       ================================================================= *@
+    <div class="folio-head">
+        <div class="folio-head-main">
+            <h1 class="folio-title">Folio: @folio</h1>
+
+            <div class="status-tabs" role="tablist" aria-label="Estatus del trámite">
+                <button type="button" class="status-tab is-active" role="tab" aria-selected="true">Dictamen Administrativo</button>
+                <button type="button" class="status-tab" role="tab" aria-selected="false">En Proceso</button>
+            </div>
+        </div>
+
+        <div class="folio-head-actions">
+            <button type="button" class="doc-gen-btn doc-gen-btn--secondary" data-bs-toggle="modal" data-bs-target="#modalSaldoAsegurado">
+                <i data-lucide="wallet" aria-hidden="true"></i> Conoce tu saldo
+            </button>
+            <button type="button" class="folio-chat-btn" id="btnChatAsegurado" data-bs-toggle="modal" data-bs-target="#modalChatAsegurado" title="Mensajes" aria-label="Ver mensajes de este folio">
+                <i data-lucide="message-circle" aria-hidden="true"></i>
+                <span class="folio-chat-badge">2</span>
+            </button>
+        </div>
+    </div>
+
+    @* =================================================================
+       Datos del asegurado titular (solo lectura)
+       Reutiliza .form-section / .field-grid / .field-readonly-value de
+       form-sections.css — mismo patrón que DetalleSolicitud.cshtml.
+       ================================================================= *@
+    <section class="form-section" aria-label="Datos del asegurado titular">
+        <div class="form-section-header" style="cursor:default">
+            <span class="form-section-title">Datos del asegurado titular</span>
+        </div>
+        <div class="form-section-body">
+            <div class="field-grid">
+                <div class="field"><span class="field-label">Número de Empleado</span><span class="field-readonly-value">38603787</span></div>
+                <div class="field"><span class="field-label">Titular</span><span class="field-readonly-value">Carlos Moncayo Espinosa</span></div>
+                <div class="field"><span class="field-label">Grupo</span><span class="field-readonly-value">17000003</span></div>
+                <div class="field"><span class="field-label">Correo</span><span class="field-readonly-value">abarrera@bupa.com.mx</span></div>
+            </div>
+            <div class="field-grid">
+                <div class="field"><span class="field-label">Número telefónico</span><span class="field-readonly-value">7 7777 7777</span></div>
+                <div class="field"><span class="field-label">Fecha Inicio Vigencia</span><span class="field-readonly-value">03/01/2026</span></div>
+                <div class="field"><span class="field-label">Fecha Fin Vigencia</span><span class="field-readonly-value">31/12/2199</span></div>
+                <div class="field"><span class="field-label">Miembro desde</span><span class="field-readonly-value">3/01/2026</span></div>
+            </div>
+            <div class="field-grid">
+                <div class="field"><span class="field-label">Edad</span><span class="field-readonly-value">40 Años</span></div>
+            </div>
+        </div>
+    </section>
+
+    @* =================================================================
+       Datos del paciente o derechohabiente (solo lectura)
+       ================================================================= *@
+    <section class="form-section" aria-label="Datos del paciente o derechohabiente">
+        <div class="form-section-header" style="cursor:default">
+            <span class="form-section-title">Datos del paciente o derechohabiente</span>
+        </div>
+        <div class="form-section-body">
+            <div class="field-grid">
+                <div class="field"><span class="field-label">Nombre del paciente</span><span class="field-readonly-value">Luis Fernando Moncayo Insua</span></div>
+                <div class="field"><span class="field-label">Parentesco</span><span class="field-readonly-value">Hijo</span></div>
+                <div class="field"><span class="field-label">Fecha de servicio</span><span class="field-readonly-value">22/03/2026</span></div>
+            </div>
+            <div class="field-grid">
+                <div class="field"><span class="field-label">Estado</span><span class="field-readonly-value">Ciudad de México</span></div>
+                <div class="field"><span class="field-label">Municipio</span><span class="field-readonly-value">Venustiano Carranza</span></div>
+                <div class="field"><span class="field-label">Edad</span><span class="field-readonly-value">8 Años</span></div>
+            </div>
+        </div>
+    </section>
+
+    @* =================================================================
+       Datos de la reclamación
+       Reutiliza .section-toolbar / .pdf-link / .doc-gen-btn / .doc-block /
+       .claim-table de detalle-solicitud.css. Los modales ICD/Histórico ICD
+       son los mismos ya construidos para DetalleSolicitud (misma lógica,
+       reutilizada vía detalle-solicitud.js, ver @@section Scripts).
+       ================================================================= *@
+    <section class="form-section" aria-label="Datos de la reclamación">
+        <div class="form-section-header" style="cursor:default">
+            <span class="form-section-title">Datos de la reclamación</span>
+        </div>
+        <div class="form-section-body">
+
+            <div class="section-toolbar">
+                <div class="section-toolbar-actions">
+                    <button type="button" class="doc-gen-btn doc-gen-btn--secondary" data-icd-open data-icd-prefill="false">
+                        <i data-lucide="stethoscope" aria-hidden="true"></i> ICD
+                    </button>
+                    <button type="button" class="doc-gen-btn doc-gen-btn--secondary" data-historico-icd-open>
+                        <i data-lucide="history" aria-hidden="true"></i> Histórico ICD
+                    </button>
+                </div>
+                <a href="#" class="pdf-link">
+                    <i data-lucide="file-text" aria-hidden="true"></i> Formato de instrucción de reembolso
+                </a>
+            </div>
+
+            @* Tabs de tipo de gasto — la referencia (Asegurado_DatosReclamacion1)
+               agrega "Laboratorio y gabinete" junto a "Medicamentos". Cada tab
+               despliega su propio contenido (data-claim-tab / data-claim-tab-panel),
+               ver detalle-asegurado.js. *@
+            <div class="claim-tabs" role="tablist" aria-label="Tipo de gasto">
+                <button type="button" class="claim-tab is-active" role="tab" aria-selected="true" data-claim-tab aria-controls="panelMedicamentos">Medicamentos</button>
+                <button type="button" class="claim-tab" role="tab" aria-selected="false" data-claim-tab aria-controls="panelLaboratorio">Laboratorio y gabinete</button>
+            </div>
+
+            <div id="panelMedicamentos" class="claim-tab-panel" role="tabpanel" data-claim-tab-panel>
+
+                @* ---- Comprobante Fiscal Digital por Internet (Factura) ----
+                   Novedad de esta pantalla frente a DetalleSolicitud: la fila de
+                   "PHARMA PLUS" agrupa una partida de detalle (fila hija
+                   colapsable), en vez de una fila plana. Es una extensión mínima
+                   del mismo patrón doc-block/claim-table, no una tabla nueva. *@
+                <div class="doc-block">
+                    <button type="button" class="doc-block-header" data-doc-toggle aria-expanded="true" aria-controls="bodyFacturaAsegurado">
+                        <span class="doc-block-name">Comprobante Fiscal Digital por Internet (Factura)</span>
+                        <span class="doc-block-total">Total: 1 · Monto: $1,604.00</span>
+                        <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                    </button>
+                    <div id="bodyFacturaAsegurado" class="doc-block-body">
+                        <div class="claim-table-scroll">
+                            <table class="claim-table">
+                                <thead>
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>Concepto</th>
+                                        <th class="ta-right">Importe</th>
+                                        <th class="ta-right">Valor Unitario</th>
+                                        <th class="ta-center">Cantidad</th>
+                                        <th class="ta-center">Procedente</th>
+                                        <th>Observaciones</th>
+                                        <th class="ta-right">Monto aprobado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="claim-table-group-row">
+                                        <td colspan="2">
+                                            <button type="button" class="claim-table-group-toggle" data-claim-row-toggle aria-expanded="true" aria-controls="detallePharmaPlus">
+                                                <i data-lucide="chevron-down" class="claim-table-group-chevron" aria-hidden="true"></i> PHARMA PLUS
+                                            </button>
+                                        </td>
+                                        <td class="ta-right">$1,604.00</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="ta-center"><i data-lucide="check-circle-2" class="claim-check-icon" aria-hidden="true"></i></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr id="detallePharmaPlus" class="claim-table-child-row">
+                                        <td></td>
+                                        <td>TRIXEO INH 120/7.2/5MCG CAJ C/120UI</td>
+                                        <td class="ta-right">$1,604.00</td>
+                                        <td class="ta-right">$1,604.00</td>
+                                        <td class="ta-center">1</td>
+                                        <td class="ta-center"><i data-lucide="check-circle-2" class="claim-check-icon" aria-hidden="true"></i></td>
+                                        <td></td>
+                                        <td class="ta-right">$1,604.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                @* ---- Receta ----
+                   Documento ya validado (solo lectura): reutiliza la misma tabla
+                   claim-table con columnas Documento/Validado/Ver, igual que el
+                   bloque "Informe médico" de DetalleSolicitud. *@
+                <div class="doc-block">
+                    <button type="button" class="doc-block-header" data-doc-toggle aria-expanded="true" aria-controls="bodyRecetaAsegurado">
+                        <span class="doc-block-name">Receta</span>
+                        <span class="doc-block-total">Total: 1</span>
+                        <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                    </button>
+                    <div id="bodyRecetaAsegurado" class="doc-block-body">
+                        <div class="claim-table-scroll">
+                            <table class="claim-table">
+                                <thead>
+                                    <tr>
+                                        <th>Documento</th>
+                                        <th class="ta-center">Validado</th>
+                                        <th class="ta-center">Ver documento</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Diagnóstico Neurólogo Emma Frine Gutiérrez Mena 2</td>
+                                        <td class="ta-center"><i data-lucide="check-circle-2" class="claim-check-icon" aria-hidden="true"></i></td>
+                                        <td class="ta-center">
+                                            <button type="button" class="thumb-btn" title="Ver documento" aria-label="Ver receta adjunta">
+                                                <i data-lucide="file-text" aria-hidden="true"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* =============================================================
+               Tab "Laboratorio y gabinete" — Asegurado_DatosReclamacion1.
+               Los bloques "Factura" y "Orden médica" reutilizan doc-block/
+               claim-table (mismo lenguaje visual que Medicamentos, en vez del
+               ícono "+" y el fondo claro de la referencia, para mantener
+               consistencia con el resto de la pantalla). Lo único nuevo es
+               .doc-block-figures para mostrar Acumulado/Por pagar junto al
+               total, y la tercera cifra "Límite por evento" en el resumen.
+               Colapsados por defecto, a diferencia de Medicamentos.
+               ============================================================= *@
+            <div id="panelLaboratorio" class="claim-tab-panel" role="tabpanel" data-claim-tab-panel hidden>
+
+                <div class="doc-block">
+                    <button type="button" class="doc-block-header" data-doc-toggle aria-expanded="false" aria-controls="bodyFacturaLaboratorio">
+                        <span class="doc-block-name">Factura</span>
+                        <span class="doc-block-figures">
+                            <span class="doc-block-figure doc-block-figure--link">Acumulado: $4,616.50</span>
+                            <span class="doc-block-figure">Por pagar: $5,134.50</span>
+                        </span>
+                        <span class="doc-block-total">Total: 2 · Monto: $5,134.50</span>
+                        <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                    </button>
+                    <div id="bodyFacturaLaboratorio" class="doc-block-body" hidden>
+                        <div class="claim-table-scroll">
+                            <table class="claim-table">
+                                <thead>
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>Concepto</th>
+                                        <th class="ta-right">Importe</th>
+                                        <th class="ta-right">Valor Unitario</th>
+                                        <th class="ta-center">Cantidad</th>
+                                        <th class="ta-center">Procedente</th>
+                                        <th>Observaciones</th>
+                                        <th class="ta-right">Monto aprobado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td></td>
+                                        <td>Laboratorio Clínico ABC — Perfil de química sanguínea</td>
+                                        <td class="ta-right">$2,340.00</td>
+                                        <td class="ta-right">$2,340.00</td>
+                                        <td class="ta-center">1</td>
+                                        <td class="ta-center"><i data-lucide="check-circle-2" class="claim-check-icon" aria-hidden="true"></i></td>
+                                        <td></td>
+                                        <td class="ta-right">$2,276.50</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>Centro de Imagenología López — Radiografía de tórax</td>
+                                        <td class="ta-right">$2,794.50</td>
+                                        <td class="ta-right">$2,794.50</td>
+                                        <td class="ta-center">1</td>
+                                        <td class="ta-center"><i data-lucide="check-circle-2" class="claim-check-icon" aria-hidden="true"></i></td>
+                                        <td></td>
+                                        <td class="ta-right">$2,858.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="doc-block">
+                    <button type="button" class="doc-block-header" data-doc-toggle aria-expanded="false" aria-controls="bodyOrdenMedicaLaboratorio">
+                        <span class="doc-block-name">Orden médica</span>
+                        <span class="doc-block-total">Total: 1</span>
+                        <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                    </button>
+                    <div id="bodyOrdenMedicaLaboratorio" class="doc-block-body" hidden>
+                        <div class="claim-table-scroll">
+                            <table class="claim-table">
+                                <thead>
+                                    <tr>
+                                        <th>Documento</th>
+                                        <th class="ta-center">Validado</th>
+                                        <th class="ta-center">Ver documento</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Orden médica — Estudios de laboratorio y gabinete</td>
+                                        <td class="ta-center"><i data-lucide="check-circle-2" class="claim-check-icon" aria-hidden="true"></i></td>
+                                        <td class="ta-center">
+                                            <button type="button" class="thumb-btn" title="Ver documento" aria-label="Ver orden médica adjunta">
+                                                <i data-lucide="file-text" aria-hidden="true"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-figures">
+                    <div class="summary-figure">
+                        <span class="summary-figure-label">Límite por evento</span>
+                        <span class="summary-figure-value">$5,000.00 MXN</span>
+                    </div>
+                    <div class="summary-figure">
+                        <span class="summary-figure-label">Monto disponible cobertura</span>
+                        <span class="summary-figure-value">$55,383.50 MXN</span>
+                    </div>
+                    <div class="summary-figure">
+                        <span class="summary-figure-label">Monto disponible póliza</span>
+                        <span class="summary-figure-value">$47,928.17 MXN</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* =================================================================
+       Evidencias — solo lectura, sin captura (a diferencia de la vista de
+       analista). Reutiliza claim-table para el estado vacío.
+       ================================================================= *@
+    <section class="form-section" aria-label="Evidencias">
+        <div class="form-section-header" style="cursor:default">
+            <span class="form-section-title">Evidencias</span>
+        </div>
+        <div class="form-section-body">
+            <div class="claim-table-scroll">
+                <table class="claim-table">
+                    <thead>
+                        <tr><th>Archivo</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="asegurado-empty-cell">Sin evidencias adicionales cargadas.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    @* =================================================================
+       Pie: Siniestro + volver al tablero (solo lectura, sin acciones de
+       dictamen — esas son exclusivas de la vista de analista).
+       ================================================================= *@
+    <div class="detalle-actions">
+        <div class="detalle-actions-left">
+            <div class="siniestro-tag">
+                <span class="siniestro-tag-label">Siniestro</span>
+                <span class="siniestro-tag-value">Enfermedad</span>
+            </div>
+        </div>
+        <div class="detalle-actions-right">
+            <a asp-controller="Home" asp-action="Index" class="icon-btn" title="Volver al tablero" aria-label="Volver al tablero">
+                <i data-lucide="arrow-left" aria-hidden="true"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+@* =====================================================================
+   Modal · Conoce tu saldo
+   Misma estructura que el modal homónimo de DetalleSolicitud (doc-block +
+   claim-table), simplificada a un solo beneficiario: en el portal del
+   Asegurado el titular consulta únicamente su propio saldo.
+   ===================================================================== *@
+<div class="modal fade" id="modalSaldoAsegurado" tabindex="-1" aria-labelledby="modalSaldoAseguradoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalSaldoAseguradoLabel">Conoce tu saldo</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="doc-block">
+                    <button type="button" class="doc-block-header" data-doc-toggle aria-expanded="true" aria-controls="bodySaldoAsegurado">
+                        <span class="doc-block-name">Carlos Moncayo Espinosa</span>
+                        <i data-lucide="chevron-down" class="doc-block-chevron" aria-hidden="true"></i>
+                    </button>
+                    <div id="bodySaldoAsegurado" class="doc-block-body">
+                        <div class="claim-table-scroll">
+                            <table class="claim-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cobertura</th>
+                                        <th class="ta-right">Suma Asegurada</th>
+                                        <th class="ta-right">Suma Pagada</th>
+                                        <th class="ta-right">Suma Reclamada</th>
+                                        <th class="ta-right">Coaseguro</th>
+                                        <th class="ta-right">Suma Remanente</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Honorarios médicos quirúrgicos</td><td class="ta-right">$60,000.00</td><td class="ta-right">$0.00</td><td class="ta-right">$0.00</td><td class="ta-right">0.00 %</td><td class="ta-right">$60,000.00</td></tr>
+                                    <tr><td>Consultas</td><td class="ta-right">$60,000.00</td><td class="ta-right">$0.00</td><td class="ta-right">$0.00</td><td class="ta-right">0.00 %</td><td class="ta-right">$60,000.00</td></tr>
+                                    <tr><td>Medicamentos</td><td class="ta-right">$10,000.00</td><td class="ta-right">$0.00</td><td class="ta-right">$1,604.00</td><td class="ta-right">0.00 %</td><td class="ta-right">$8,396.00</td></tr>
+                                    <tr><td>Laboratorio y gabinete</td><td class="ta-right">$60,000.00</td><td class="ta-right">$0.00</td><td class="ta-right">$0.00</td><td class="ta-right">0.00 %</td><td class="ta-right">$60,000.00</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-text-vm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* =====================================================================
+   Modal · ICD / CPT (idéntico al de DetalleSolicitud.cshtml — misma
+   lógica reutilizada desde detalle-solicitud.js, sin duplicarla).
+   ===================================================================== *@
+<div class="modal fade" id="modalIcd" tabindex="-1" aria-labelledby="modalIcdLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalIcdLabel">Diagnóstico / Tratamiento</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="icd-modal-field field">
+                    <label class="field-label" for="icdCodigo">ICD</label>
+                    <input type="text" id="icdCodigo" class="form-control" placeholder="Ej. Z719">
+                </div>
+                <div class="icd-modal-field field">
+                    <label class="field-label" for="icdDescripcion">Descripción</label>
+                    <input type="text" id="icdDescripcion" class="form-control" placeholder="Descripción del diagnóstico">
+                </div>
+                <div class="icd-modal-field field">
+                    <label class="field-label" for="cptCodigo">CPT</label>
+                    <input type="text" id="cptCodigo" class="form-control" placeholder="Ej. L7999FE">
+                </div>
+                <div class="icd-modal-field field">
+                    <label class="field-label" for="cptDescripcion">Descripción</label>
+                    <input type="text" id="cptDescripcion" class="form-control" placeholder="Descripción del tratamiento">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-text-vm" data-icd-limpiar>Limpiar</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* =====================================================================
+   Modal · Histórico ICD (idéntico al de DetalleSolicitud.cshtml).
+   ===================================================================== *@
+<div class="modal fade" id="modalHistoricoIcd" tabindex="-1" aria-labelledby="modalHistoricoIcdLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalHistoricoIcdLabel">Histórico ICD</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="claim-table-scroll">
+                    <table class="claim-table">
+                        <thead>
+                            <tr><th>Folio</th><th>Motivo</th><th>Concepto</th><th>DX</th></tr>
+                        </thead>
+                        <tbody data-historico-body></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* =====================================================================
+   Modal · Mensajes (chat) — exclusivo de esta pantalla, sin equivalente
+   previo en el proyecto. Contenido de demostración, sin backend.
+   ===================================================================== *@
+<div class="modal fade" id="modalChatAsegurado" tabindex="-1" aria-labelledby="modalChatAseguradoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalChatAseguradoLabel">Mensajes</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="note-timeline">
+                    <li class="note-item">
+                        <div class="note-body">
+                            <p class="note-text">Tu solicitud está en dictamen administrativo. Te avisaremos ante cualquier actualización.</p>
+                            <span class="note-meta">Bupa México · 15/07/2026, 9:40 a. m.</span>
+                        </div>
+                    </li>
+                    <li class="note-item">
+                        <div class="note-body">
+                            <p class="note-text">Recibimos tu receta médica correctamente.</p>
+                            <span class="note-meta">Bupa México · 14/07/2026, 5:12 p. m.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-text-vm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/form-sections.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/detalle-solicitud.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/detalle-asegurado.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    @* initDocBlocks (acordeón de doc-block) e initIcdModal/initHistoricoIcdModal
+       ya existen y son genéricos: se reutilizan tal cual, sin duplicarlos. Solo
+       detalle-asegurado.js contiene lo exclusivo de esta pantalla. *@
+    <script src="~/js/reembolso-solicitud.js" asp-append-version="true"></script>
+    <script src="~/js/detalle-solicitud.js" asp-append-version="true"></script>
+    <script src="~/js/detalle-asegurado.js" asp-append-version="true"></script>
+}
