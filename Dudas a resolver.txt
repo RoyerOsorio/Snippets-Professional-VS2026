@@ -1,0 +1,100 @@
+Los primeros temas que requieren profundización son:
+
+Variabilidad por cliente/grupo. Necesitamos separar qué es configuración, qué es regla particular y qué representa realmente un proceso diferente.
+
+Solicitud vs trámite vs reclamo. El lenguaje actual utiliza términos que podrían representar el mismo concepto o conceptos diferentes.
+
+Correcciones y rechazos. Existen rechazos temporales, definitivos, de documentos, conceptos y solicitudes completas. Necesitamos comprender sus reglas exactas.
+
+Coberturas y facturas. Una solicitud puede involucrar múltiples coberturas y múltiples facturas por cobertura; además existen diferencias nacionales/internacionales y médicas/dentales.
+
+Pago. Necesitamos comprender qué significa funcionalmente “estar listo para pago”, quién es responsable del pago y qué constituye una dispersión exitosa.
+
+Cuenta bancaria. Debemos determinar si pertenece conceptualmente al ciclo del reembolso, al asegurado, a configuración del cliente o a otra responsabilidad empresarial. No lo decidiremos todavía.
+
+8. Deberá resolver prioritariamente estas preguntas:
+
+Cliente, grupo y configuración
+
+¿Qué representa exactamente un cliente frente a un grupo y un subgrupo?
+
+¿Qué reglas pueden configurarse por cliente, grupo, subgrupo y cobertura?
+
+¿Una misma cobertura puede comportarse diferente entre grupos?
+
+
+Póliza y asegurados
+
+¿Qué diferencia funcional existe entre:
+
+Póliza
+Certificado
+Titular
+Asegurado
+Beneficiario
+Familiar
+
+¿Quién es realmente propietario de una solicitud de reembolso?
+
+
+Solicitud
+
+¿Cuándo nace formalmente una solicitud?
+
+¿Puede modificarse después de enviada?
+
+¿Una solicitud siempre pertenece a una única póliza?
+
+¿Puede contener simultáneamente conceptos médicos y dentales?
+
+Cobertura
+
+¿Qué determina que un gasto pertenezca a una cobertura?
+
+¿Quién decide la cobertura aplicable?
+
+¿Qué reglas existen para documentos nacionales e internacionales?
+
+
+Dictamen
+
+¿Qué condiciones determinan:
+
+Aprobación
+Pago parcial
+Rechazo temporal
+Rechazo definitivo
+
+¿Administrativo, médico y dental comparten realmente el mismo concepto de “dictamen” o únicamente vocabulario similar?
+
+Corrección
+
+¿Qué elementos pueden corregirse?
+
+¿Quién puede corregirlos?
+
+¿Existe límite de ciclos de corrección?
+
+¿Qué ocurre con elementos que ya habían sido aprobados?
+
+Cuenta bancaria
+
+¿La cuenta pertenece al asegurado, póliza, cliente o solicitud desde perspectiva de negocio?
+
+¿Una cuenta aprobada puede perder validez?
+
+¿Qué ocurre con solicitudes pendientes si cambia la cuenta?
+
+Pago
+
+¿Cuándo se considera autorizado un reembolso?
+
+¿Cuándo se considera pagado?
+
+¿Puede existir pago parcial en varias dispersiones?
+
+¿Qué ocurre si la dispersión falla?
+
+9. ¿Qué comportamientos son realmente reglas permanentes del negocio, cuáles son configurables y cuáles son accidentes históricos de cada sistema.
+
+Estas distinciones serán fundamentales.
