@@ -1,0 +1,580 @@
+A. Configuración de cobertura
+
+Necesitamos que el Líder Funcional precise:
+
+1. Monto total de cobertura
+
+Cuando una cobertura tiene un monto total, ¿ese monto aplica a:
+
+toda la póliza,
+cada miembro de la póliza,
+cada beneficiario,
+o depende de la configuración? APLICA
+
+Ejemplo: cobertura con límite de $20,000. ¿Titular y esposa comparten esos $20,000 o cada uno tiene $20,000?
+
+2. Vigencia del monto
+
+¿Durante qué periodo se consume ese monto?
+
+¿Se reinicia:
+
+por año calendario,
+por vigencia de póliza,
+por renovación,
+o bajo otra regla?
+POR VIGENCIA POLIZA DE MANERA ANUAL
+
+3. Composición familiar
+
+La regla mencionada de:
+
+Titular + esposa         → monto A
+Titular + esposa + hijo  → monto B
+
+¿se configura individualmente por Grupo y Cobertura?
+SI
+
+¿Importa únicamente el número de miembros o también el tipo de parentesco?
+TAMBIEN EL TIPO DEPARENTEZCO
+
+Ejemplo: ¿titular + esposa + hijo equivale a titular + dos hijos?
+
+4. Cambios familiares
+
+¿Qué ocurre con el monto disponible si durante la vigencia:
+
+entra un nuevo miembro,
+sale un miembro,
+cambia un beneficiario?
+
+¿Se recalcula el monto total? ¿Se conserva lo ya consumido?
+SE CONSERVA LO YA CONSUMIDO
+
+B. Límite por evento
+
+5. ¿Qué es exactamente un “evento”?
+
+Necesitamos definición de negocio.
+
+¿Puede ser:
+
+una consulta,
+una factura,
+un concepto de factura,
+un tratamiento,
+una fecha de atención,
+un diagnóstico?
+UN CONCEPTO DE FACTURA
+
+6. Aplicación del límite
+
+Si el límite por evento es $1,000 y una factura contiene tres conceptos de $700:
+
+¿el límite aplica:
+
+Factura total → máximo $1,000
+
+o a cada concepto?
+
+A CADA CONCEPTO
+
+7. Múltiples facturas del mismo evento
+
+¿Dos facturas pueden corresponder al mismo evento?
+SI
+De ser así, ¿comparten el mismo límite?
+SI
+
+C. Deducible
+
+8. Nivel de aplicación
+
+¿El deducible aplica:
+
+por Reclamo,
+por cobertura,
+por evento,
+por beneficiario,
+por póliza, APLICA
+por periodo?
+
+9. Consumo del deducible
+
+¿Puede consumirse entre varios Reclamos?
+NO
+
+Ejemplo:
+
+Deducible = $2,000
+
+Reclamo 1 elegible = $1,200
+Reclamo 2 elegible = $1,500
+
+¿el primer Reclamo consume $1,200 del deducible y al segundo sólo le quedan $800 por cubrir?
+NO APLICA
+
+10. Deducible por cobertura
+
+¿Cada cobertura puede tener su propio deducible?
+SI
+
+¿Puede una cobertura no tenerlo?
+SI
+
+Ya sabemos que puede habilitarse/deshabilitarse, pero necesitamos conocer su alcance exacto.
+
+D. Coaseguro
+
+11. ¿Qué representa el coaseguro?
+
+Ejemplo: si está configurado 20 %, ¿significa que:
+
+Grupo cubre 80 %
+Titular absorbe 20 %
+
+?
+SI, ES PORCENTAJE CON EL QUE PARTICIPA EL ASEGURADO
+
+12. Base del coaseguro
+
+¿Sobre qué monto se aplica?
+
+monto facturado,APLICA
+monto después del límite por evento,
+monto después del deducible,
+monto autorizado por el dictaminador?
+
+13. Orden
+
+Necesitamos confirmar el orden económico.
+
+Por ejemplo, ¿es:
+
+Monto reclamado
+↓
+Límite por evento
+↓
+Deducible
+↓
+Coaseguro
+↓
+Monto reembolsable
+
+o existe otro orden?
+FLUJO CORRECTO, CABE MENCIONAR QUE PREVIO AL MONTO REEMBOLSABLE EXISTE  UN DICTAMEN MEDICO Y UN DICTAMEN ADMINISTRATIVO EL CUAL PUEDE INFLUIR EN EL MONTO TOTAL A REEMBOLSAR.
+
+Este punto es crítico; no debemos inferirlo.
+
+E. Acumulados
+
+14. Consumo de cobertura
+
+¿Qué monto consume el acumulado?
+
+Lo reclamado.
+Lo autorizado.
+Lo efectivamente pagado. APLICA
+
+Mi hipótesis de trabajo sería lo efectivamente pagado, pero debe validarse.
+
+15. Pago parcial
+
+Cuando de $10,000 reclamados sólo se pagan $6,000, ¿el acumulado de cobertura aumenta únicamente $6,000?
+SI
+
+16. Reclamos rechazados
+
+¿Un Reclamo rechazado definitivamente consume algo del monto disponible?
+NO
+Probablemente no, pero necesitamos confirmación.
+
+17. Reclamos en proceso
+
+¿El monto disponible se “reserva” mientras un Reclamo está en dictamen o sólo se descuenta una vez pagado?
+SOLO SE DECUENTA UNA VEZ PAGADO
+
+Esto es importante para escenarios simultáneos:
+
+Disponible: $10,000
+
+Reclamo A en proceso: $8,000
+Reclamo B en proceso: $7,000
+
+¿Qué comportamiento espera el negocio?
+TENER EL DICTAMEN COMPLETO Y CLARIDAD DEL MONTO TOTAL A REEMBOLSAR PARA PODER PAGAR DICHOS RECLAMOS
+
+F. Coberturas múltiples
+
+18. Cálculo independiente
+
+Cuando un Reclamo contiene tres coberturas, ¿cada una mantiene:
+
+límites,
+deducible,
+coaseguro,
+acumulados
+
+de manera independiente?
+SI
+
+19. Monto final
+
+¿El monto final del Reclamo es simplemente la suma de los montos aprobados de todas sus coberturas?
+
+Conceptualmente:
+
+Cobertura A aprobada: X
+Cobertura B aprobada: Y
+Cobertura C aprobada: Z
+
+Monto final = X + Y + Z
+
+Necesitamos confirmar si existen reglas globales adicionales.
+SUMA DE MONTOS APROBADOS ESTO ES CORRECTO
+
+BD-DISC-03 — Ciclo de vida del Reclamo
+
+Aquí buscamos separar algo que probablemente será fundamental más adelante:
+
+Flujo del Reclamo, estado del Reclamo y resultado del Reclamo no necesariamente son el mismo concepto.
+
+No los modelaremos todavía, pero necesitamos entenderlos.
+
+A. Inicio
+
+20. Antes del folio
+
+Mientras el titular está capturando información pero todavía no envía, ¿el sistema conserva esa captura?
+Si
+En caso afirmativo:
+
+¿puede salir y regresar? SI
+¿tiene algún identificador? SI
+¿cuánto tiempo permanece? INDEFINIDAMENTE
+¿puede eliminarla? SI, ELIMINACION LOGICA
+
+Estamos preguntando por comportamiento de negocio, no por persistencia.
+
+B. Flujo
+
+Actualmente conocemos nombres como:
+
+Recepción de documentos
+Validación de cuenta bancaria
+Validación administrativa
+Dictamen médico
+Dictamen dental
+Proceso de pago
+Finalizado
+
+21. ¿Un Reclamo siempre tiene exactamente un flujo actual a la vez?
+UN FLUJO A LA VEZ
+
+¿O podría estar, por ejemplo, simultáneamente en validación bancaria y administrativa?
+
+22. Flujo configurable
+
+¿La secuencia se configura por Grupo explícitamente?
+
+Ejemplo:
+
+Grupo A:
+Administrativo → Médico → Pago
+
+Grupo B:
+Banco → Médico → Pago
+
+¿O el sistema deriva la secuencia a partir de varias configuraciones individuales?
+SI, VARIAS CONFIGURACIONES INDIVIDUALES
+
+C. Estado
+
+Ya aparecieron:
+
+En proceso
+Incompleto
+Aprobado
+Rechazado
+
+Necesitamos precisar:
+
+23. ¿Esos son todos los estados posibles?
+NO, SE AGREGA CANCELADO, PAGADO
+
+24. ¿Estado y flujo son independientes?
+NO
+Ejemplo:
+
+Flujo: Dictamen médico
+Estado: En proceso
+
+y:
+
+Flujo: Recepción de documentos
+Estado: Incompleto
+
+¿Es ésta la lógica correcta?
+SI
+
+25. ¿“Finalizado” es sólo flujo?
+SI
+Mientras que:
+
+Aprobado
+Rechazado
+
+son resultados/estados.
+
+Esto parece probable por la evidencia, pero necesitamos confirmación.
+
+D. Rechazo temporal
+
+26. Rechazo de concepto
+
+Si sólo un concepto es rechazado temporalmente:
+
+¿todo el Reclamo pasa a Recepción de documentos?
+NO, PASA LO VALIDO Y LO NO VALIDO SE EXCLUYE O QUEDA RECHAZADO
+
+27. Rechazo de documento
+
+Si un documento corresponde únicamente a una de varias coberturas:
+
+¿se detiene el Reclamo completo o únicamente esa cobertura?
+SOLO LA COBERTURA
+
+28. Rechazo temporal completo
+
+¿Qué diferencia existe funcionalmente entre:
+
+rechazar temporalmente un documento
+AL RECHAZAR UN DOCUMENTO EL FLUJO CONTINUA.
+
+y:
+
+rechazar temporalmente el Reclamo completo
+
+¿Qué casos justifican el segundo?
+AL RECHAZAR UN Reclamo EL FLUJO NO CONTINUA.
+
+29. Regreso al flujo
+
+Ya sabemos que después de corregir vuelve al flujo que produjo el rechazo.
+
+Necesitamos confirmar si regresa:
+
+al mismo dictaminador/persona, NO
+al mismo tipo de etapa pero reasignable, SI
+o existe otra regla. NO
+
+REGRESA AL MISMO TIPO DE ETAPA REASIGNABLE
+
+E. Rechazo definitivo
+
+30. Concepto definitivo
+
+¿El resto de la factura continúa normalmente?
+NO
+
+31. Documento definitivo
+
+¿Qué significa rechazar definitivamente un documento?
+EL DOCUMENTO YA NO PUEDE SER MODIFICADO PARA CONTINUAR CON EL PROCESO
+
+¿Implica automáticamente que:
+
+la cobertura asociada no procede,
+una factura no procede,
+o depende del tipo de documento?
+IMPLICA la cobertura asociada no procede y una factura no procede,
+
+32. Reclamo completo definitivo
+
+Ya sabemos que termina como:
+
+Finalizado / Rechazado
+
+¿quién puede realizar rechazo definitivo completo?
+
+Administrativo. APLICA
+Médico. APLICA
+Dental. APLICA
+Otros.
+
+
+F. Pago parcial
+
+33. Resultado del Reclamo
+
+Un Reclamo con algunos conceptos rechazados definitivamente y otros pagados termina como:
+
+Finalizado / Aprobado
+
+¿correcto? SI
+
+Es decir, ¿no existe un estado final:
+
+Parcialmente aprobado?
+NO
+
+34. Historial del rechazo
+
+Aunque el Reclamo termine aprobado, ¿los conceptos rechazados conservan permanentemente su razón de rechazo?
+SI
+
+G. Proceso de pago
+
+35. Entrada irreversible
+
+Una vez que entra a Proceso de pago:
+
+¿puede volver a Dictamen Médico/Dental por alguna situación normal?
+NO
+
+36. Error previo al banco
+
+Si detectan un error de monto antes de dispersar, ¿qué ocurre?
+
+¿Existe retroceso?
+SI
+
+37. Rechazo durante pago
+
+Necesitamos aclarar especialmente la respuesta anterior:
+
+“queda en espera hasta que ocurra un rechazo o sea pagado”.
+
+¿Quién puede marcar el pago/reclamo como rechazado en esta etapa?
+DICTAMEN MEDICO, DICTAMEN ADMINISTRATIVO, DICTAMEN DENTAL
+
+¿El rechazo proviene:
+
+banco,
+sistema pagador,
+Grupo,
+operador?
+OPERADOR
+
+¿El Reclamo finaliza como rechazado o se intenta corregir?
+INTENTA SEGUIR MANDANDO EL RECLAMO A CORRECCION CON EL ASEGURADO
+
+H. Cuenta bancaria
+
+38. Cuenta modificada con Reclamo en proceso
+
+Supongamos:
+
+Reclamo A → Dictamen médico
+Reclamo B → Proceso de pago
+Titular cambia cuenta
+
+¿Qué sucede con cada uno?
+RECLAMO A. EL FLUJO SIGUE NORMAL
+RECLAMO B. SE DEBE, DETENER EL PROCESO DE PAGO PARA GESTIONAR NUEVAMENTE CON LA NUEVA CUENTA BANCARIA
+
+39. Cuenta utilizada para el pago
+
+¿El Reclamo referencia conceptualmente la cuenta bancaria aprobada que existía al momento de entrar a pago, o siempre utiliza la cuenta vigente del titular?
+SIEMPRE UTILIZA LA CUENTA BANCARIA APROBADA QUE EXISTIA AL MOMENTO DE ENTRAR A PAGO.
+
+No estamos preguntando cómo guardarla, sino cuál es la regla empresarial.
+
+I. Auditoría e historial
+
+40. Qué movimientos deben conservarse
+
+Además de correcciones, ¿debe conservarse historial de:
+
+cambios de flujo,
+decisiones de dictamen,
+rechazos,
+aprobaciones,
+cambios de monto,
+pago,
+cambio de cuenta bancaria?
+TODO
+
+41. Comentarios
+
+¿Todos los movimientos requieren comentario o sólo determinados eventos?
+SOLO DETERMINADO EVENTOS.
+
+42. Razones catalogadas
+
+Para rechazo sabemos que se selecciona un motivo.
+
+¿Los motivos son catálogos configurables?
+SI
+
+¿Varían según:
+
+administrativo,
+médico,
+dental,
+documento,
+concepto?
+SI
+
+BD-DISC-04 — Variabilidad por Grupo
+
+Sugiero también abrir desde ahora este tercer bloque, porque es el otro eje central del sistema.
+
+No hace falta responderlo en una sesión distinta; el Líder puede contestarlo junto con los dos anteriores.
+
+Flujo
+
+43. ¿Cada Grupo tiene un único flujo configurado o puede tener diferentes flujos según cobertura?
+DIFERENTES FLUJOS SEGUN COBERTURA.
+
+44. ¿Puede un mismo Grupo tener algunas coberturas médicas y otras dentales?
+SI
+
+45. En ese caso, ¿el flujo del Reclamo se determina automáticamente por las coberturas seleccionadas?
+SI
+
+Validación administrativa
+
+46. ¿Puede configurarse completamente como opcional por Grupo?
+SI
+47. ¿Puede ser obligatoria sólo para ciertas coberturas?
+NO
+
+Validación bancaria
+
+48. ¿Se habilita por Grupo completo o por Subgrupo?
+POR AMBOS
+
+49. ¿Puede depender de la cobertura?
+SI
+
+Pago
+
+50. ¿Un Grupo utiliza siempre una sola estrategia de pago?
+SI
+
+Sistema pagador
+o
+Pago por Grupo
+
+¿O puede variar por Subgrupo/cobertura?
+SI
+
+Configuraciones heredadas
+
+51. ¿Los Subgrupos heredan configuraciones del Grupo?
+SI
+
+52. ¿Pueden sobrescribirlas?
+NO
+
+Esto es especialmente importante. Necesitamos saber si conceptualmente existe:
+
+Grupo
+   ↓ hereda
+Subgrupo
+   ↓ override
+Cobertura
+
+o si cada nivel se configura independientemente.
+SI HEREDA.
