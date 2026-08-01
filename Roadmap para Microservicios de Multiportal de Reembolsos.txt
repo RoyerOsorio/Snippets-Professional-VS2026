@@ -1,0 +1,33 @@
+Roadmap definitivo propuesto para Microservicios de Multiportal de Reembolsos
+Fase 1 — Architecture Blueprint
+BA-ART-001 — Architecture Vision & Principles
+BA-ART-002 — Quality Attribute Architecture
+BA-ART-003 — Logical Architecture Blueprint
+BA-ART-004 — Integration Architecture Blueprint
+BA-ART-005 — Information Architecture Blueprint
+BA-ART-006 — Security Architecture Blueprint
+BA-ART-007 — Operational Architecture Blueprint
+BA-ART-008 — Deployment Architecture Blueprint
+BA-ART-009 — Technology Architecture Blueprint
+Estado: completado.
+
+Fase 2 — Implementation Architecture Baseline
+BA-ART-010 — Microservice Architecture Blueprint
+BA-ART-011 — Technology Selection Baseline
+BA-ART-012 — Initial Architecture Decision Record Set
+BA-ART-013 — Vertical Slice Definition
+Estado: pendiente.
+Resultado: arquitectura presentable y lista para comenzar código.
+
+Fase 3 — Architecture Governance and Engineering Standards
+BA-ART-014 — Architecture Governance & Decision Framework
+BA-ART-015 — Engineering & Development Standards Blueprint
+BA-ART-016 — API & Contract Design Blueprint
+BA-ART-017 — Persistence & Data Implementation Standards
+BA-ART-018 — Testing & Quality Engineering Blueprint
+BA-ART-019 — DevSecOps & Delivery Engineering Blueprint
+BA-ART-020 — Observability Implementation Blueprint
+BA-ART-021 — Architecture Decision Governance & ADR Lifecycle
+BA-ART-022 — Architecture Implementation Roadmap
+Estado: pendiente.
+Resultado: desarrollo industrializado, gobernado y escalable.
