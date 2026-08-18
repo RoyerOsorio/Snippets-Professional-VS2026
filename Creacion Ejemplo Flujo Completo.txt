@@ -1,0 +1,1757 @@
+# Objetivo
+
+Tienes acceso al proyecto actual de UI de **Multiportal Reembolsos**, desarrollado con **ASP.NET Core MVC, C# y Razor**.
+
+Necesito que construyas sobre este proyecto un **ejercicio técnico empresarial completo y ejecutable de arquitectura de microservicios**, cuyo propósito principal es demostrar de extremo a extremo cómo funcionará la nueva arquitectura.
+
+Este desarrollo será utilizado como **demo técnico para el gerente y para el equipo de desarrollo**, por lo que debe permitir observar claramente:
+
+* cómo está estructurado el repositorio;
+* cómo se separan las soluciones y proyectos;
+* cómo se comunica la UI con el backend;
+* cuál es el papel del API Gateway;
+* cuál es el papel del Orchestrator;
+* cómo se comunican los microservicios;
+* qué lógica pertenece a cada microservicio;
+* cómo cada microservicio accede exclusivamente a su propia base de datos;
+* cómo se utilizan llamadas síncronas HTTP;
+* cómo se utilizan eventos asíncronos mediante RabbitMQ;
+* cómo fluye una operación desde Razor hasta SQL Server;
+* cómo puede consultarse posteriormente desde la UI el resultado del proceso.
+
+No busco solamente pseudocódigo o documentación.
+
+**Debes crear código real, estructura real de soluciones/proyectos, configuración, scripts y componentes ejecutables.**
+
+---
+
+# Contexto arquitectónico
+
+La arquitectura propuesta está compuesta actualmente por los siguientes seis microservicios:
+
+1. **MprClientes**
+2. **MprConfiguracionReglas**
+3. **MprGestionReclamos**
+4. **MprDocumentos**
+5. **MprPagos**
+6. **MprAuditoria**
+
+Además existen:
+
+* **Multiportal.Web**
+
+  * ASP.NET Core MVC;
+  * Razor;
+  * C#.
+
+* **Reimbursement.Orchestrator**
+
+  * responsable de coordinar procesos que involucren múltiples microservicios.
+
+* **API Gateway**
+
+  * conceptualmente Azure API Management;
+  * punto de entrada externo para la aplicación web.
+
+* **RabbitMQ**
+
+  * utilizado para eventos de integración y comunicación asíncrona.
+
+* **SQL Server**
+
+  * una base de datos independiente por cada microservicio.
+
+---
+
+# Convenciones de idioma
+
+Todo el código desarrollado debe estar escrito en **español**, excepto cuando el lenguaje, framework, librería o protocolo obligue a utilizar palabras reservadas o nombres técnicos estándar.
+
+Esto incluye, cuando sea razonable:
+
+* nombres de clases;
+* métodos;
+* propiedades;
+* comandos;
+* queries;
+* handlers;
+* interfaces;
+* DTOs;
+* eventos;
+* variables;
+* carpetas funcionales;
+* mensajes de validación;
+* comentarios;
+* documentación.
+
+Ejemplos esperados:
+
+```csharp
+public sealed class Reclamo
+{
+    public Guid Id { get; private set; }
+
+    public EstadoReclamo Estado { get; private set; }
+
+    public void Aprobar()
+    {
+        // ...
+    }
+}
+```
+
+```csharp
+public sealed record AprobarReclamoComando(Guid ReclamoId);
+```
+
+```csharp
+public interface IRepositorioReclamos
+{
+    Task<Reclamo?> ObtenerPorIdAsync(
+        Guid reclamoId,
+        CancellationToken cancellationToken);
+}
+```
+
+No traduzcas palabras reservadas o APIs del framework:
+
+```csharp
+public
+private
+async
+await
+Task
+CancellationToken
+DbContext
+MapPost
+MapGet
+```
+
+También pueden conservarse términos técnicos universales cuando traducirlos vuelva confuso el diseño, por ejemplo:
+
+* API;
+* HTTP;
+* RabbitMQ;
+* Outbox;
+* Gateway;
+* TraceId;
+* CorrelationId;
+* DTO;
+* SQL Server.
+
+---
+
+# Información de las bases de datos
+
+Te proporcionaré seis archivos `.txt`, uno por cada base de datos:
+
+* `MprCliente.txt`
+* `MprConfiguracionReglas.txt`
+* `MprGestionReclamos.txt`
+* `MprDocumentos.txt`
+* `MprPagos.txt`
+* `MprAuditoria.txt`
+
+Estos archivos contienen:
+
+* tablas existentes;
+* columnas;
+* tipos;
+* relaciones;
+* referencias;
+* información heredada del sistema actual.
+
+Utilízalos como **fuente principal para comprender el esquema de datos existente**.
+
+---
+
+# Estrategia de base de datos: Database First
+
+El proyecto utilizará:
+
+**SQL Server + Entity Framework Core + Database First.**
+
+No utilices Code First como estrategia principal.
+
+Las bases y tablas representan un esquema existente que debe ser tratado como fuente de verdad para persistencia.
+
+Debes:
+
+1. analizar los `.txt` proporcionados;
+2. identificar las tablas necesarias para este vertical slice;
+3. crear o preparar los scripts SQL necesarios para montar localmente esas estructuras en SQL Server;
+4. utilizar `Scaffold-DbContext` / `dotnet ef dbcontext scaffold` o una estrategia equivalente de EF Core Database First;
+5. generar las entidades de persistencia y `DbContext` desde la base;
+6. mantener el código generado por scaffold separado de la lógica de dominio;
+7. evitar colocar comportamiento de dominio directamente en las entidades generadas automáticamente.
+
+Ejemplo conceptual:
+
+```text
+SQL Server
+    ↓
+EF Core Database First
+    ↓
+Entidades de persistencia generadas
+    ↓
+Adaptadores / Infrastructure
+    ↓
+Application / Domain
+```
+
+No conviertas automáticamente las entidades generadas por Database First en entidades de dominio ricas.
+
+Debe existir una separación clara entre:
+
+```text
+Modelo de persistencia
+≠
+Modelo de dominio
+```
+
+cuando el caso de uso realmente requiera comportamiento de dominio.
+
+---
+
+# Regla importante sobre scaffolding
+
+El código generado mediante Database First puede regenerarse.
+
+Por ello:
+
+* evita modificar directamente archivos generados cuando sea posible;
+* utiliza partial classes cuando realmente sea necesario extender una entidad generada;
+* utiliza mappers/adapters hacia el dominio;
+* documenta cómo volver a ejecutar el scaffold;
+* documenta qué archivos son generados y cuáles son escritos manualmente.
+
+Crea scripts o instrucciones reproducibles, por ejemplo:
+
+```bash
+dotnet ef dbcontext scaffold \
+    "<cadena-conexion>" \
+    Microsoft.EntityFrameworkCore.SqlServer \
+    --context MprClientesDbContext \
+    --output-dir Persistencia/ModelosGenerados \
+    --context-dir Persistencia \
+    --no-onconfiguring \
+    --force
+```
+
+Ajusta los nombres y parámetros a la estructura real.
+
+No expongas contraseñas reales en Git.
+
+---
+
+# Responsabilidades de los microservicios
+
+## MprClientes
+
+Responsable de:
+
+* cliente;
+* asegurado;
+* información personal;
+* póliza asociada;
+* certificado;
+* vigencia;
+* roles;
+* contratante;
+* grupo/subgrupo;
+* agente/promotor cuando aplique.
+
+Pregunta conceptual que responde:
+
+**¿Quién es el cliente y bajo qué relación contractual/póliza está cubierto?**
+
+---
+
+## MprConfiguracionReglas
+
+Responsable de:
+
+* reglas de reembolso;
+* motivos de reembolso;
+* documentos requeridos;
+* deducibles;
+* coaseguro;
+* límites;
+* factores;
+* configuración del flujo;
+* parámetros funcionales;
+* catálogos de apoyo que realmente pertenezcan a este contexto.
+
+Pregunta conceptual que responde:
+
+**¿Con qué reglas debe procesarse el reembolso?**
+
+---
+
+## MprGestionReclamos
+
+Responsable del ciclo de vida del Claim/Reembolso:
+
+* creación;
+* envío;
+* estados;
+* dictamen administrativo;
+* dictamen médico cuando corresponda;
+* resolución;
+* aprobación/rechazo;
+* monto solicitado;
+* monto autorizado;
+* preparación lógica para pago.
+
+Este microservicio debe proteger las reglas e invariantes de un Reclamo.
+
+No debe ser simplemente un CRUD de una tabla.
+
+Ejemplos de comportamiento:
+
+* `CrearReclamo`
+* `EnviarReclamo`
+* `IniciarDictamenAdministrativo`
+* `AprobarDictamenAdministrativo`
+* `SolicitarDictamenMedico`
+* `AprobarDictamenMedico`
+* `AprobarReclamo`
+* `RechazarReclamo`
+
+---
+
+## MprDocumentos
+
+Responsable de:
+
+* metadata documental;
+* documentos asociados al Reclamo;
+* tipo de documento;
+* clasificación;
+* validación;
+* estado documental;
+* referencia hacia almacenamiento de archivos.
+
+El archivo físico debe almacenarse preferentemente en almacenamiento de objetos/archivos y no directamente en SQL Server.
+
+Para el entorno local puedes utilizar una solución sencilla compatible con el ejercicio.
+
+---
+
+## MprPagos
+
+Responsable de:
+
+* solicitud de pago;
+* cuenta bancaria;
+* estado del pago;
+* ejecución/simulación del pago;
+* confirmación;
+* rechazo/fallo;
+* información necesaria para seguimiento financiero.
+
+No debe recibir actualizaciones arbitrarias como:
+
+```text
+ActualizarPago(Estado = Pagado)
+```
+
+Prefiere operaciones de negocio como:
+
+* `SolicitarPago`
+* `ProcesarPago`
+* `ConfirmarPago`
+* `MarcarPagoFallido`
+
+---
+
+## MprAuditoria
+
+Responsable de:
+
+* histórico;
+* bitácora;
+* trazabilidad;
+* registro de eventos relevantes.
+
+La escritura de Auditoría debe realizarse principalmente a partir de **eventos de integración**, no mediante llamadas HTTP síncronas obligatorias desde cada servicio.
+
+Una falla temporal de Auditoría no debe impedir crear o aprobar un reembolso.
+
+---
+
+# Principios arquitectónicos obligatorios
+
+Implementa los microservicios siguiendo:
+
+* **SOLID**;
+* **Clean Architecture pragmática/híbrida**;
+* **Ports & Adapters / Hexagonal Architecture**;
+* **Minimal APIs** como adaptador HTTP.
+
+La arquitectura debe ser pragmática.
+
+No introduzcas capas, interfaces, repositories, factories o abstracciones si no aportan valor concreto al caso de uso.
+
+Evita diseño ceremonial o sobrearquitectura.
+
+---
+
+# Clean Architecture híbrida
+
+Utiliza aproximadamente:
+
+```text
+Api
+    ↓
+Application
+    ↓
+Domain
+
+Infrastructure
+    ├──→ Application
+    └──→ Domain
+```
+
+La regla principal es:
+
+**Domain debe permanecer independiente de infraestructura y frameworks.**
+
+El proyecto Domain NO debe depender de:
+
+* Infrastructure;
+* ASP.NET Core;
+* Entity Framework Core;
+* SQL Server;
+* RabbitMQ;
+* clientes HTTP;
+* YARP;
+* Azure API Management.
+
+---
+
+# Ports & Adapters / Hexagonal Architecture
+
+`Application` debe definir los puertos necesarios para interactuar con componentes externos.
+
+Ejemplos:
+
+```csharp
+public interface IRepositorioReclamos
+{
+    Task<Reclamo?> ObtenerAsync(
+        Guid reclamoId,
+        CancellationToken cancellationToken);
+
+    Task GuardarAsync(
+        Reclamo reclamo,
+        CancellationToken cancellationToken);
+}
+```
+
+```csharp
+public interface IPublicadorEventosIntegracion
+{
+    Task PublicarAsync<TEvento>(
+        TEvento evento,
+        CancellationToken cancellationToken);
+}
+```
+
+```csharp
+public interface IClienteMprClientes
+{
+    Task<ContextoClienteDto?> ObtenerContextoClienteAsync(
+        int aseguradoId,
+        CancellationToken cancellationToken);
+}
+```
+
+`Infrastructure` debe proporcionar los adapters concretos:
+
+```text
+IRepositorioReclamos
+        ▲
+        │
+RepositorioReclamosEfCore
+```
+
+```text
+IPublicadorEventosIntegracion
+        ▲
+        │
+PublicadorRabbitMq
+```
+
+```text
+IClienteMprClientes
+        ▲
+        │
+ClienteHttpMprClientes
+```
+
+---
+
+# Database First dentro de la arquitectura hexagonal
+
+Debido a que utilizaremos Database First, evita hacer que `Application` dependa directamente del `DbContext` generado cuando exista lógica de dominio relevante.
+
+Ejemplo:
+
+```text
+SQL Server
+    ↓
+MprGestionReclamosDbContext
+    ↓
+RepositorioReclamosEfCore
+    ↓
+IRepositorioReclamos
+    ↓
+Application
+    ↓
+Domain
+```
+
+Para consultas simples de lectura puede utilizarse un acceso más directo dentro de Infrastructure/Application si mejora la simplicidad.
+
+No es obligatorio crear repositories genéricos.
+
+Evita:
+
+```csharp
+IRepositorioGenerico<T>
+```
+
+si no aporta un beneficio real.
+
+---
+
+# SOLID
+
+Aplica SOLID de forma pragmática.
+
+Especialmente:
+
+## Single Responsibility
+
+Cada componente debe tener una responsabilidad claramente identificable.
+
+## Open/Closed
+
+Permite sustituir adapters cuando tenga sentido sin modificar los casos de uso.
+
+## Liskov Substitution
+
+Las implementaciones deben respetar correctamente sus contratos.
+
+## Interface Segregation
+
+Prefiere interfaces pequeñas y orientadas a capacidades.
+
+## Dependency Inversion
+
+Application/Domain no deben depender directamente de detalles externos.
+
+---
+
+# Minimal APIs
+
+Utiliza Minimal APIs para los microservicios.
+
+Los endpoints deben ser delgados.
+
+Ejemplo:
+
+```csharp
+grupo.MapPost(
+    "/{reclamoId:guid}/aprobar",
+    AprobarReclamoAsync);
+```
+
+```csharp
+private static async Task<IResult> AprobarReclamoAsync(
+    Guid reclamoId,
+    AprobarReclamoManejador manejador,
+    CancellationToken cancellationToken)
+{
+    var resultado = await manejador.ManejarAsync(
+        new AprobarReclamoComando(reclamoId),
+        cancellationToken);
+
+    return Results.Ok(resultado);
+}
+```
+
+No coloques 100 o 200 líneas de lógica dentro del endpoint.
+
+Organiza los endpoints por feature, por ejemplo:
+
+```text
+MprGestionReclamos.Api/
+│
+├── Endpoints/
+│   └── Reclamos/
+│       ├── CrearReclamoEndpoint.cs
+│       ├── EnviarReclamoEndpoint.cs
+│       ├── AprobarReclamoEndpoint.cs
+│       └── ObtenerReclamoEndpoint.cs
+│
+├── Extensiones/
+│   ├── ExtensionesServicios.cs
+│   └── ExtensionesEndpoints.cs
+│
+└── Program.cs
+```
+
+Mantén `Program.cs` pequeño.
+
+---
+
+# Regla fundamental sobre microservicios
+
+Cada microservicio debe:
+
+* poseer su lógica de negocio;
+* poseer su modelo;
+* poseer exclusivamente su propia base SQL Server;
+* acceder solamente a su base;
+* publicar contratos explícitos;
+* comunicarse con otros servicios mediante API o eventos.
+
+Está prohibido:
+
+* consultar directamente la base de datos de otro microservicio;
+* crear foreign keys entre bases de diferentes microservicios;
+* hacer JOIN entre bases de microservicios;
+* crear stored procedures distribuidos;
+* compartir `DbContext`;
+* utilizar una base común;
+* colocar toda la lógica de negocio en el Orchestrator.
+
+---
+
+# Responsabilidad del Orchestrator
+
+Debe existir:
+
+`Reimbursement.Orchestrator`
+
+Su función es:
+
+**coordinar procesos de aplicación que involucren varios microservicios.**
+
+El Orchestrator puede conocer:
+
+* qué pasos deben ejecutarse;
+* en qué orden;
+* a qué servicio debe invocar;
+* cómo manejar una respuesta;
+* cómo continuar el proceso.
+
+El Orchestrator NO debe conocer internamente:
+
+* cómo se determina una vigencia;
+* cómo se calcula una regla propia de MprConfiguracionReglas;
+* cómo se valida internamente un Reclamo;
+* cómo se valida un documento;
+* cómo se ejecuta internamente un pago.
+
+Regla:
+
+> El Orchestrator posee la lógica de coordinación; cada microservicio posee las reglas e invariantes de su dominio.
+
+---
+
+# Responsabilidad del API Gateway
+
+El API Gateway representa Azure API Management.
+
+Debe encargarse conceptualmente de:
+
+* routing;
+* autenticación/autorización;
+* validación de token;
+* políticas;
+* versionado;
+* observabilidad;
+* rate limiting cuando aplique.
+
+NO debe contener lógica de negocio.
+
+NO debe convertirse en un Orchestrator.
+
+---
+
+# API Gateway local
+
+La demo debe poder ejecutarse localmente.
+
+Utiliza preferentemente:
+
+**YARP Reverse Proxy**
+
+como representación local del Gateway.
+
+Además crea:
+
+```text
+deploy/apim/
+```
+
+con documentación y ejemplos de cómo los routes/policies se trasladarían posteriormente a Azure API Management.
+
+No dependas de Azure APIM para ejecutar localmente la demo.
+
+---
+
+# Stack tecnológico
+
+Utiliza:
+
+* .NET 10;
+* ASP.NET Core;
+* C#;
+* MVC / Razor;
+* ASP.NET Core Minimal APIs;
+* Entity Framework Core;
+* SQL Server;
+* EF Core Database First;
+* RabbitMQ;
+* OpenAPI;
+* Docker;
+* .NET Aspire cuando aporte valor;
+* OpenTelemetry;
+* xUnit;
+* FluentAssertions;
+* Testcontainers;
+* Architecture Tests;
+* YARP para Gateway local.
+
+---
+
+# Arquitectura interna por microservicio
+
+Utiliza una estructura semejante a:
+
+```text
+MprGestionReclamos/
+│
+├── MprGestionReclamos.slnx
+│
+├── MprGestionReclamos.Api/
+├── MprGestionReclamos.Application/
+├── MprGestionReclamos.Domain/
+├── MprGestionReclamos.Infrastructure/
+└── MprGestionReclamos.Contracts/
+```
+
+### Api
+
+Responsable de:
+
+* Minimal APIs;
+* transporte HTTP;
+* autenticación/autorización;
+* mapping de requests/responses;
+* OpenAPI.
+
+### Application
+
+Responsable de:
+
+* casos de uso;
+* commands;
+* queries;
+* handlers;
+* puertos/interfaces;
+* coordinación dentro del bounded context.
+
+### Domain
+
+Responsable de:
+
+* entidades;
+* value objects;
+* reglas;
+* invariantes;
+* estados;
+* comportamiento de negocio.
+
+### Infrastructure
+
+Responsable de:
+
+* EF Core;
+* Database First;
+* SQL Server;
+* adapters;
+* repositorios cuando aporten valor;
+* RabbitMQ;
+* HTTP clients;
+* Outbox;
+* integración técnica.
+
+### Contracts
+
+Responsable de:
+
+* request/response públicos;
+* DTOs;
+* contratos de integración;
+* integration events.
+
+---
+
+# Estructura del monorepo
+
+Diseña el ejemplo aproximadamente así:
+
+```text
+multiportal-reembolsos/
+│
+├── Multiportal.All.slnx
+├── Directory.Build.props
+├── Directory.Packages.props
+│
+├── src/
+│   │
+│   ├── frontend/
+│   │   └── Multiportal.Web/
+│   │
+│   ├── gateway/
+│   │   └── Multiportal.ApiGateway/
+│   │
+│   ├── orchestration/
+│   │   └── Reimbursement.Orchestrator/
+│   │
+│   ├── services/
+│   │   ├── MprClientes/
+│   │   ├── MprConfiguracionReglas/
+│   │   ├── MprGestionReclamos/
+│   │   ├── MprDocumentos/
+│   │   ├── MprPagos/
+│   │   └── MprAuditoria/
+│   │
+│   └── building-blocks/
+│
+├── tests/
+│   ├── services/
+│   ├── orchestration/
+│   └── architecture/
+│
+├── deploy/
+│   ├── docker/
+│   ├── aspire/
+│   ├── apim/
+│   ├── sql/
+│   └── scripts/
+│
+└── docs/
+    ├── architecture/
+    ├── adr/
+    └── demo/
+```
+
+Respeta el proyecto UI existente cuando ya tenga convenciones establecidas.
+
+---
+
+# Flujo de negocio a implementar
+
+Implementa un **happy path completo de registro y procesamiento de un reembolso**.
+
+Debe atravesar realmente la arquitectura.
+
+---
+
+# Paso 1 — Seleccionar cliente
+
+Desde Razor:
+
+* consultar clientes;
+* seleccionar uno;
+* mostrar datos básicos;
+* mostrar póliza;
+* mostrar certificado;
+* mostrar vigencia.
+
+Flujo:
+
+```text
+UI
+↓
+Gateway
+↓
+MprClientes
+↓
+SQL Server MprClientes
+```
+
+---
+
+# Paso 2 — Iniciar reembolso
+
+La UI solicita crear un reembolso.
+
+Flujo:
+
+```text
+UI
+↓
+Gateway
+↓
+Reimbursement.Orchestrator
+```
+
+El Orchestrator debe:
+
+1. consultar `MprClientes`;
+2. obtener/verificar contexto contractual;
+3. consultar `MprConfiguracionReglas`;
+4. obtener reglas;
+5. obtener documentos requeridos;
+6. solicitar a `MprGestionReclamos` crear el Reclamo;
+7. solicitar a `MprDocumentos` preparar/asociar documentos.
+
+---
+
+# El Orchestrator no ejecuta reglas internas
+
+Evita:
+
+```csharp
+if (fechaActual <= fechaFinPoliza)
+{
+    ...
+}
+```
+
+dentro del Orchestrator si esa regla pertenece a `MprClientes`.
+
+En cambio utiliza una operación explícita del servicio correspondiente.
+
+Ejemplo conceptual:
+
+```text
+ValidarContextoCliente
+```
+
+Lo mismo aplica para reglas de reembolso.
+
+---
+
+# Paso 3 — Crear Reclamo
+
+`MprGestionReclamos` crea y persiste el Reclamo.
+
+Como mínimo:
+
+* ReclamoId;
+* ClienteId;
+* PolizaId/CertificadoId como referencias externas;
+* MotivoReembolsoId;
+* monto solicitado;
+* estado;
+* fecha;
+* datos mínimos requeridos.
+
+No debe existir FK física hacia otras bases.
+
+---
+
+# Paso 4 — Documentos
+
+`MprDocumentos`:
+
+* asocia documentos requeridos;
+* permite subir al menos un archivo;
+* almacena metadata en SQL Server;
+* almacena el archivo externamente/localmente;
+* mantiene estado documental.
+
+---
+
+# Paso 5 — Enviar Reclamo
+
+Implementa:
+
+`EnviarReclamo`
+
+No actualices arbitrariamente una columna de estado.
+
+Utiliza comportamiento de dominio.
+
+---
+
+# Paso 6 — Dictamen administrativo
+
+Permite:
+
+* iniciar dictamen;
+* aprobar dictamen administrativo.
+
+El dominio debe proteger transiciones válidas.
+
+---
+
+# Paso 7 — Dictamen médico
+
+Una regla de `MprConfiguracionReglas` determina si es necesario.
+
+Ejemplo:
+
+```text
+RequiereDictamenMedico = true
+```
+
+La UI debe mostrarlo.
+
+---
+
+# Paso 8 — Aprobar Reclamo
+
+Implementa:
+
+`AprobarReclamo`
+
+MprGestionReclamos debe comprobar las invariantes.
+
+Después publica:
+
+`ReclamoAprobadoParaPago`
+
+---
+
+# Transacciones ACID locales
+
+Cada microservicio debe manejar **transacciones ACID locales mediante EF Core + SQL Server**.
+
+Las operaciones que modifiquen varias entidades o registros dentro de la misma base deben ejecutarse atómicamente mediante:
+
+* BEGIN TRANSACTION;
+* COMMIT;
+* ROLLBACK.
+
+No implementes transacciones distribuidas entre microservicios.
+
+Ejemplo conceptual:
+
+```text
+AprobarReclamo
+
+BEGIN TRANSACTION
+
+Actualizar Reclamo
+Insertar información relacionada
+Insertar mensaje Outbox
+
+COMMIT
+```
+
+Si falla alguno:
+
+```text
+ROLLBACK
+```
+
+---
+
+# Uso de SaveChanges y transacciones explícitas
+
+Cuando una sola llamada a:
+
+```csharp
+SaveChangesAsync()
+```
+
+sea suficiente para garantizar atomicidad local, aprovecha el comportamiento transaccional de EF Core.
+
+Cuando el caso de uso requiera:
+
+* múltiples `SaveChangesAsync`;
+* operaciones explícitas intermedias;
+* control transaccional específico;
+* múltiples modificaciones que necesiten delimitar claramente la unidad atómica;
+
+utiliza:
+
+```csharp
+await dbContext.Database.BeginTransactionAsync(...)
+```
+
+y maneja:
+
+```csharp
+CommitAsync()
+RollbackAsync()
+```
+
+de forma explícita.
+
+No agregues transacciones explícitas innecesarias.
+
+---
+
+# Consistencia entre microservicios
+
+Está prohibido intentar algo semejante a:
+
+```text
+BEGIN DISTRIBUTED TRANSACTION
+
+MprClientes DB
+MprGestionReclamos DB
+MprDocumentos DB
+MprPagos DB
+
+COMMIT
+```
+
+En su lugar utiliza:
+
+```text
+Transacciones locales
++
+Transactional Outbox
++
+Idempotencia
++
+Reintentos
++
+Consistencia eventual
++
+Compensaciones/Saga cuando corresponda
+```
+
+---
+
+# Transactional Outbox
+
+Para operaciones que:
+
+1. modifican SQL Server;
+2. y generan un evento de integración;
+
+utiliza Transactional Outbox.
+
+Ejemplo:
+
+```text
+BEGIN TRANSACTION
+
+Actualizar Reclamo
+
+INSERT OutboxMessage
+(
+    ReclamoAprobadoParaPago
+)
+
+COMMIT
+```
+
+Después:
+
+```text
+Procesador Outbox
+↓
+RabbitMQ
+```
+
+No utilices como solución definitiva:
+
+```csharp
+await dbContext.SaveChangesAsync();
+await rabbitMq.PublicarAsync(evento);
+```
+
+sin manejar el escenario donde SQL Server confirma y RabbitMQ falla.
+
+---
+
+# Paso 9 — RabbitMQ
+
+Utiliza RabbitMQ para:
+
+`ReclamoAprobadoParaPago`
+
+Incluye:
+
+* exchange;
+* queues;
+* producer;
+* consumer;
+* contratos;
+* retries básicos;
+* manejo de mensajes fallidos.
+
+Evita sobrediseñar la infraestructura.
+
+---
+
+# Paso 10 — MprPagos
+
+Consume:
+
+`ReclamoAprobadoParaPago`
+
+y crea una solicitud de pago.
+
+Debe demostrar:
+
+* modelo independiente;
+* SQL Server independiente;
+* ausencia de FK hacia Claims;
+* idempotencia.
+
+Implementa:
+
+`ConfirmarPago`
+
+y publica:
+
+`PagoCompletado`.
+
+---
+
+# Idempotencia
+
+Diseña los consumers bajo la premisa:
+
+**RabbitMQ puede entregar un mensaje más de una vez.**
+
+Por lo tanto:
+
+`ReclamoAprobadoParaPago`
+
+no debe crear dos pagos.
+
+Implementa una estrategia de idempotencia comprensible.
+
+Por ejemplo:
+
+* identificador único del evento;
+* tabla `MensajesProcesados`;
+* constraint único;
+* verificación transaccional.
+
+---
+
+# Paso 11 — Auditoría
+
+`MprAuditoria` consume eventos relevantes:
+
+* `ReclamoCreado`;
+* `DocumentoCargado`;
+* `ReclamoEnviado`;
+* `DictamenAdministrativoAprobado`;
+* `DictamenMedicoAprobado`;
+* `ReclamoAprobadoParaPago`;
+* `PagoSolicitado`;
+* `PagoCompletado`.
+
+Construye una bitácora/timeline.
+
+Evita que el flujo principal dependa de:
+
+```text
+POST /auditoria
+```
+
+---
+
+# Saga / compensaciones
+
+Cuando el Orchestrator coordine varios servicios, no utilices rollback SQL remoto.
+
+Ejemplo:
+
+```text
+Validar cliente          OK
+Obtener reglas           OK
+Crear reclamo            OK
+Preparar documentos      ERROR
+```
+
+El Orchestrator debe decidir entre:
+
+* reintentar;
+* mantener el proceso pendiente;
+* ejecutar una acción compensatoria;
+* marcar el proceso como fallido recuperable.
+
+Si implementas una compensación, utiliza un caso de uso explícito.
+
+Ejemplo:
+
+```text
+CancelarReclamoPorFalloDeInicializacion
+```
+
+No manipules directamente las tablas de Claims desde el Orchestrator.
+
+---
+
+# Paso 12 — UI final
+
+Crea una vista Razor sencilla para el demo.
+
+Ejemplo:
+
+```text
+Reembolso #R-00001
+
+Cliente:
+Cliente Demo
+
+Póliza:
+POL-001
+
+Monto solicitado:
+$12,000
+
+Estado:
+Pagado
+
+Documentos:
+✓ Factura
+✓ Identificación
+
+Timeline:
+10:01 Reclamo creado
+10:03 Documento cargado
+10:04 Reclamo enviado
+10:05 Dictamen administrativo aprobado
+10:07 Dictamen médico aprobado
+10:08 Reclamo aprobado
+10:08 Pago solicitado
+10:10 Pago completado
+```
+
+Los datos deben provenir realmente de las APIs.
+
+No hardcodees el estado final.
+
+---
+
+# Comunicación síncrona vs asíncrona
+
+Utiliza HTTP cuando:
+
+* se necesita respuesta inmediata;
+* el Orchestrator necesita información para continuar;
+* la UI solicita una consulta.
+
+Utiliza RabbitMQ cuando:
+
+* se comunica un hecho ocurrido;
+* el consumidor puede reaccionar de forma desacoplada;
+* no se necesita respuesta inmediata.
+
+---
+
+# Manejo de errores
+
+Incluye manejo para:
+
+* cliente inexistente;
+* póliza no vigente;
+* configuración inexistente;
+* documento obligatorio faltante;
+* transición inválida;
+* mensaje duplicado;
+* pago ya creado;
+* fallo temporal de un servicio;
+* fallo en RabbitMQ;
+* fallo de SQL Server.
+
+Utiliza `ProblemDetails` cuando aplique.
+
+---
+
+# Observabilidad
+
+Implementa:
+
+* logs estructurados;
+* TraceId;
+* CorrelationId;
+* OpenTelemetry;
+* propagación por HTTP;
+* propagación razonable por RabbitMQ.
+
+Debe ser posible seguir un flujo aproximadamente así:
+
+```text
+Browser
+→ Gateway
+→ Orchestrator
+→ MprClientes
+→ MprConfiguracionReglas
+→ MprGestionReclamos
+→ RabbitMQ
+→ MprPagos
+→ MprAuditoria
+```
+
+---
+
+# SQL Server para ejecución local
+
+Prepara una forma reproducible de levantar SQL Server localmente.
+
+Puedes utilizar:
+
+* Docker;
+* SQL Server Developer;
+* SQL Server compatible con el entorno actual del equipo.
+
+Crea scripts dentro de:
+
+```text
+deploy/sql/
+```
+
+por ejemplo:
+
+```text
+deploy/sql/
+├── MprClientes/
+├── MprConfiguracionReglas/
+├── MprGestionReclamos/
+├── MprDocumentos/
+├── MprPagos/
+└── MprAuditoria/
+```
+
+Cada servicio debe tener únicamente scripts correspondientes a su base.
+
+---
+
+# Database First reproducible
+
+Para cada servicio documenta:
+
+1. cómo crear/restaurar su base;
+2. cómo ejecutar scripts;
+3. cómo ejecutar scaffold;
+4. qué carpeta contiene código generado;
+5. qué código no debe editarse manualmente;
+6. cómo regenerar el modelo después de cambios del esquema.
+
+---
+
+# Seguridad
+
+Integra la autenticación existente del proyecto UI.
+
+No destruyas el mecanismo actual.
+
+El Gateway debe estar preparado conceptualmente para validación de identidad/token.
+
+Para la demo local puede existir una simplificación, pero debe quedar documentada.
+
+---
+
+# Ejecución local
+
+Quiero poder ejecutar el demo con pocos pasos.
+
+Utiliza cuando aporte valor:
+
+* .NET Aspire;
+* Docker Compose;
+* SQL Server;
+* RabbitMQ.
+
+Debe poder levantarse:
+
+* SQL Server/bases;
+* RabbitMQ;
+* servicios;
+* Gateway;
+* Orchestrator;
+* UI.
+
+---
+
+# Datos demo
+
+Crea un conjunto mínimo de datos.
+
+Cliente:
+
+```text
+Cliente Demo
+```
+
+Póliza:
+
+```text
+POL-001
+```
+
+Configuración:
+
+* motivo de reembolso;
+* Factura obligatoria;
+* Identificación obligatoria;
+* `RequiereDictamenMedico = true`.
+
+No cargues todo el catálogo histórico.
+
+---
+
+# Tests
+
+Incluye pruebas relevantes.
+
+## Unit tests
+
+Como mínimo:
+
+* no aprobar Reclamo desde estado inválido;
+* no aprobar sin dictámenes requeridos;
+* no confirmar Pago dos veces;
+* validaciones de reglas.
+
+## Integration tests
+
+Preferentemente mediante Testcontainers cuando sea viable para SQL Server y RabbitMQ.
+
+Ejemplos:
+
+* crear Reclamo contra SQL Server real de prueba;
+* consumir evento;
+* validar endpoint relevante.
+
+## Architecture tests
+
+Valida:
+
+* Domain no depende de Infrastructure;
+* Domain no depende de EF Core;
+* Domain no depende de ASP.NET Core;
+* Domain no depende de RabbitMQ;
+* frontend no referencia Domains internos;
+* un servicio no referencia Infrastructure de otro;
+* no existen dependencias cruzadas prohibidas.
+
+---
+
+# Comentarios en el código
+
+Todo comentario debe estar en español.
+
+Prioriza comentarios que expliquen decisiones.
+
+Ejemplo:
+
+```csharp
+// ReclamoId es una referencia lógica al bounded context de Reclamos.
+// No existe una FK física hacia MprGestionReclamos porque cada microservicio
+// debe mantener independencia de persistencia.
+```
+
+Otro ejemplo:
+
+```csharp
+// El evento se almacena en Outbox dentro de la misma transacción que
+// actualiza el Reclamo. Así evitamos perder el evento si RabbitMQ
+// se encuentra temporalmente fuera de servicio.
+```
+
+Evita comentarios triviales.
+
+---
+
+# Documentación
+
+Genera:
+
+```text
+docs/demo/README.md
+```
+
+incluyendo:
+
+1. propósito;
+2. arquitectura;
+3. servicios;
+4. responsibilities;
+5. estructura;
+6. SQL Server;
+7. Database First;
+8. comandos de scaffold;
+9. ejecución local;
+10. URLs;
+11. flujo demo;
+12. eventos;
+13. transacciones;
+14. Outbox;
+15. idempotencia;
+16. Saga/compensaciones;
+17. simplificaciones;
+18. consideraciones para producción.
+
+---
+
+# Diagramas
+
+Incluye Mermaid para:
+
+## Arquitectura
+
+```text
+UI
+↓
+Gateway
+↓
+Orchestrator
+↓
+Microservicios
+↓
+SQL Server independientes
+```
+
+más RabbitMQ y Auditoría.
+
+## Sequence diagram
+
+Incluye:
+
+`Registrar y procesar un reembolso`
+
+mostrando llamadas HTTP y eventos RabbitMQ.
+
+---
+
+# Forma de trabajo
+
+Antes de modificar código:
+
+1. inspecciona completamente la UI existente;
+2. inspecciona los seis `.txt`;
+3. identifica la versión actual de .NET;
+4. identifica autenticación;
+5. identifica convenciones;
+6. identifica dependencias;
+7. identifica estructura de soluciones;
+8. identifica mecanismos existentes de acceso a SQL Server.
+
+Después presenta brevemente:
+
+* arquitectura encontrada;
+* arquitectura propuesta;
+* estructura a crear;
+* assumptions;
+* tablas que utilizarás;
+* servicios involucrados;
+* decisiones de simplificación.
+
+Después implementa.
+
+---
+
+# Prioridad
+
+La prioridad es construir un **vertical slice ejecutable, entendible y demostrable**.
+
+No construir todo el sistema.
+
+El demo debe permitir:
+
+1. abrir UI;
+2. seleccionar cliente;
+3. iniciar reembolso;
+4. consultar reglas;
+5. consultar documentos requeridos;
+6. crear Reclamo;
+7. cargar documento;
+8. enviar Reclamo;
+9. aprobar dictamen administrativo;
+10. aprobar dictamen médico;
+11. aprobar Reclamo;
+12. publicar evento;
+13. crear Payment;
+14. confirmar Payment;
+15. consultar resultado final;
+16. visualizar timeline de Auditoría.
+
+---
+
+# Definición de terminado
+
+Se considera terminado cuando:
+
+* compila;
+* SQL Server funciona;
+* Database First está documentado y reproducible;
+* cada servicio utiliza exclusivamente su base;
+* RabbitMQ funciona;
+* Gateway enruta;
+* Orchestrator coordina;
+* Minimal APIs están implementadas;
+* Clean Architecture híbrida está respetada;
+* Ports & Adapters están aplicados;
+* SOLID está aplicado pragmáticamente;
+* existen transacciones locales;
+* existe commit/rollback donde corresponde;
+* no existen transacciones distribuidas;
+* existe Transactional Outbox;
+* existe idempotencia;
+* existe al menos una estrategia de retry;
+* existe al menos una compensación documentada o implementada donde tenga sentido;
+* la UI puede recorrer el happy path;
+* existe persistencia real;
+* existe auditoría;
+* existen instrucciones reproducibles.
+
+---
+
+# Principios finales obligatorios
+
+No quiero seis CRUD APIs detrás de un Orchestrator inteligente.
+
+Quiero:
+
+```text
+Orchestrator
+    = coordinación entre servicios
+
+Application
+    = casos de uso y puertos
+
+Domain
+    = reglas e invariantes
+
+Infrastructure
+    = SQL Server + EF Core Database First
+      + RabbitMQ + HTTP + Outbox
+
+Minimal APIs
+    = adaptadores HTTP delgados
+
+API Gateway
+    = frontera, routing y políticas
+
+RabbitMQ
+    = integración asíncrona
+
+SQL Server
+    = transacciones ACID locales
+
+UI
+    = interacción con el usuario
+```
+
+Además:
+
+> Cada microservicio debe manejar transacciones ACID locales mediante EF Core y SQL Server. Las operaciones que modifiquen varios datos dentro de la misma base deben ejecutarse atómicamente mediante commit/rollback. No se permiten transacciones distribuidas entre microservicios. Para mantener consistencia entre servicios utiliza Transactional Outbox, idempotencia, reintentos y, cuando el proceso lo requiera, compensaciones/Saga.
+
+Y:
+
+> Implementa los microservicios siguiendo SOLID, Clean Architecture pragmática/híbrida y Ports & Adapters (Hexagonal Architecture). Utiliza Minimal APIs como adaptador HTTP y mantén los endpoints delgados. El Domain no debe depender de Infrastructure, ASP.NET Core, EF Core, RabbitMQ ni clientes HTTP. Application debe definir los puertos necesarios e Infrastructure proporcionar sus adaptadores. No introduzcas capas, repositories, factories o abstracciones si no aportan valor concreto al caso de uso.
+
+Por último:
+
+> Utiliza SQL Server y Entity Framework Core con estrategia Database First. Mantén las entidades generadas de persistencia separadas del modelo de dominio cuando exista comportamiento de negocio. Todo el código propio del proyecto, nomenclatura funcional, comentarios y documentación debe escribirse en español, excepto palabras reservadas y términos técnicos que no sea conveniente traducir.
