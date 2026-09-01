@@ -1,0 +1,50 @@
+Confirmado. La raíz base en tu PC es:
+
+C:\Users\royer\Downloads\Multiportal de Reembolsos - UI\Vitamedica.Multiportal\Vitamedica.Multiportal.UI\
+
+Y las rutas completas de los 25 archivos modificados hoy son:
+
+Controllers
+
+...\Vitamedica.Multiportal.UI\Controllers\ClientesController.cs
+...\Vitamedica.Multiportal.UI\Controllers\HomeController.cs
+...\Vitamedica.Multiportal.UI\Controllers\PagosController.cs
+...\Vitamedica.Multiportal.UI\Controllers\ReembolsosController.cs
+
+Models\ViewModels
+
+...\Vitamedica.Multiportal.UI\Models\ViewModels\AseguradoDetalleViewModel.cs
+...\Vitamedica.Multiportal.UI\Models\ViewModels\DerechohabienteViewModel.cs
+...\Vitamedica.Multiportal.UI\Models\ViewModels\SolicitudReembolsoCatalogosViewModel.cs
+...\Vitamedica.Multiportal.UI\Models\ViewModels\SolicitudReembolsoDetalleViewModel.cs
+...\Vitamedica.Multiportal.UI\Models\ViewModels\SolicitudReembolsoRegistroViewModel.cs
+...\Vitamedica.Multiportal.UI\Models\ViewModels\SolicitudReembolsoResumenViewModel.cs
+
+Raíz
+
+...\Vitamedica.Multiportal.UI\Program.cs
+
+Views
+
+...\Vitamedica.Multiportal.UI\Views\Clientes\Index.cshtml
+...\Vitamedica.Multiportal.UI\Views\Home\Asegurado.cshtml
+...\Vitamedica.Multiportal.UI\Views\Pagos\Index.cshtml
+...\Vitamedica.Multiportal.UI\Views\Reembolsos\Crear.cshtml
+...\Vitamedica.Multiportal.UI\Views\Reembolsos\Detalle.cshtml
+...\Vitamedica.Multiportal.UI\Views\Reembolsos\Index.cshtml
+...\Vitamedica.Multiportal.UI\Views\Reembolsos\Partials\_ResultadosSolicitudes.cshtml
+...\Vitamedica.Multiportal.UI\Views\Shared\Partials\_ClienteForm.cshtml
+
+wwwroot\js
+
+...\Vitamedica.Multiportal.UI\wwwroot\js\cliente-form.js
+...\Vitamedica.Multiportal.UI\wwwroot\js\clientes-index.js
+...\Vitamedica.Multiportal.UI\wwwroot\js\core\http.js
+...\Vitamedica.Multiportal.UI\wwwroot\js\detalle-solicitud.js
+...\Vitamedica.Multiportal.UI\wwwroot\js\pagos-index.js
+...\Vitamedica.Multiportal.UI\wwwroot\js\reembolso-solicitud.js
+...\Vitamedica.Multiportal.UI\wwwroot\js\reembolsos-index.js
+
+(el ... es siempre C:\Users\royer\Downloads\Multiportal de Reembolsos - UI\Vitamedica.Multiportal\)
+
+Ahora que el enlace con tu PC volvió, si quieres puedo armar directamente el zip de estos 25 archivos y entregártelo igual que el de documentos — dime y lo hago ahora.
