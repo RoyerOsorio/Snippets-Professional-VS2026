@@ -1,0 +1,20 @@
+Reembolso --> Crear --> nuevos campos dinámicos --> agregar botón de eliminar los campos creados dinámicamente (Hace Falta)
+
+Reembolso --> Crear --> ¿Necesitas ayuda? (Ponerlo de manera general en todas las pantallas)
+
+Reembolso --> Detalle --> Evidencias --> agregar botón de eliminar los campos de evidencias creadas dinámicamente (Hace Falta)
+
+Sidebar --> Cuando esta colapsado y se pasa el mouse sobre alguna opción, debe mostrar el nombre de la opción de manera elegante o acorde al diseño.
+
+En los Placeholder de manera general, se debe reducir el tono del color debido a que se confunde como si fuera un texto agregado por el Usuario, en la Densidad Cómoda y Compacta se percibe esto.
+
+
+Administrador, Asegurado
+(Dependiendo del Perfil muestra opciones o limita comportamiento)
+Reembolso --> Crear
+	(Asegurado no busca, automáticamente se le aparecen sus datos)
+	(Administrador puede hacer todo)
+
+Reembolso --> Detalle
+	(Asegurado solo consulta)
+	(Administrador puede hacer todo)
