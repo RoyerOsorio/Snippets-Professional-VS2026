@@ -1,12 +1,21 @@
-Reembolso --> Crear --> nuevos campos dinámicos --> agregar botón de eliminar los campos creados dinámicamente (Hace Falta)
+.cs
+  Controllers/ReembolsosController.cs
 
-Reembolso --> Crear --> ¿Necesitas ayuda? (Ponerlo de manera general en todas las pantallas)
+.cshtml
+  Views/Shared/_SidebarItems.cshtml
+  Views/Reembolsos/Crear.cshtml
+  Views/Shared/_Layout.cshtml
+  Views/Reembolsos/Index.cshtml
 
-Reembolso --> Detalle --> Evidencias --> agregar botón de eliminar los campos de evidencias creadas dinámicamente (Hace Falta)
+.js
+  wwwroot/js/reembolso-solicitud.js
+  wwwroot/js/components/sidebar.js
+  wwwroot/js/reembolsos-index.js
 
-Sidebar --> Cuando esta colapsado y se pasa el mouse sobre alguna opción, debe mostrar el nombre de la opción de manera elegante o acorde al diseño.
-
-En los Placeholder de manera general, se debe reducir el tono del color debido a que se confunde como si fuera un texto agregado por el Usuario, en la Densidad Cómoda y Compacta se percibe esto.
+.css
+  wwwroot/css/site-custom.css
+  wwwroot/css/tokens.css
+  wwwroot/css/reembolso-solicitud.css
 
 
 Administrador, Asegurado
