@@ -1,0 +1,32 @@
+Vitamedica.Multiportal.UI/.
+
+Archivos creados (nuevos)
+wwwroot/css/components/_doc-block.css
+wwwroot/css/components/_help-modal.css
+Archivos editados
+
+Vistas Razor
+
+Views/Reembolsos/Crear.cshtml
+Views/Shared/_Layout.cshtml
+
+Controllers
+
+Controllers/ReembolsosController.cs
+
+JavaScript
+
+wwwroot/js/reembolso-solicitud.js
+wwwroot/js/reembolsos-index.js
+wwwroot/js/pagos-index.js
+wwwroot/js/cuentas-bancarias-index.js
+
+CSS
+
+wwwroot/css/reembolso-solicitud.css
+wwwroot/css/site-custom.css
+wwwroot/css/tokens.css
+wwwroot/css/form-sections.css
+wwwroot/css/site.css
+wwwroot/css/index.css
+wwwroot/css/components/_table.css
